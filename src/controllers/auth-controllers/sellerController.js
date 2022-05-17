@@ -127,6 +127,7 @@ const logout = catchAsync(async (req, res, next) => {
 });
 
 const resetPassword = catchAsync(async (req, res, next) => {
+  
   // const { phone, password } = req.body
 
   // const seller = await SellerModel.findOneAndUpdate({ phone }, { password }, { new: true, runValidators: true })
