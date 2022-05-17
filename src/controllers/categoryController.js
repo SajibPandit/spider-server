@@ -162,6 +162,7 @@ exports.getSingleCategory = catchAsync(async (req, res, next) => {
           req.params.id,
           categories,
           res,
+          category //passing for solve url problem
         );
         return res.status(200).json({
           success: true,

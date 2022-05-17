@@ -1,7 +1,17 @@
 const Category = require('../models/CategoryModel');
 
-const getParentCategories = (id, categories, parents) => {
+const getParentCategories = (id, categories, parents, currentCategory) => {
   const category = categories.filter(c => c.id?.toString() === id?.toString());
+
+  //Adding current category to the url
+  parents.unshift({
+    _id: currentCategory[0]._id,
+    name: currentCategory[0].name,
+    slug: currentCategory[0].slug,
+    url: currentCategory[0].url,
+    parentId: currentCategory[0].parentId,
+  });
+
   for (cate of category) {
     parents.unshift({
       _id: cate._id,
@@ -14,6 +24,7 @@ const getParentCategories = (id, categories, parents) => {
       getParentCategories(cate.parentId, categories, parents);
     }
   }
+
   return parents;
 };
 
@@ -29,7 +40,7 @@ const getChildCategories = (id, categories) => {
   }));
 };
 
-const getFormattedSingleCategory = (id, categories, res) => {
+const getFormattedSingleCategory = (id, categories, res, currentCategory) => {
   const categoryList = {};
   const parents = [];
   const childs = [];
@@ -40,8 +51,14 @@ const getFormattedSingleCategory = (id, categories, res) => {
     categoryList.slug = cate.slug;
     categoryList.createdAt = cate.createdAt;
     categoryList.parentId = cate.parentId;
+    categoryList.parents = cate.parents;
     categoryList.childrens = getChildCategories(cate.id, categories, childs);
-    categoryList.url = getParentCategories(cate.parentId, categories, parents);
+    categoryList.url = getParentCategories(
+      cate.parentId,
+      categories,
+      parents,
+      currentCategory,
+    );
   }
 
   return categoryList;
