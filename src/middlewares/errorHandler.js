@@ -16,7 +16,12 @@ const sendErrorProd = (err, res) => {
     res
       .status(err.statusCode)
       // .json({ message: err.message, status: err.status });
-      .json({ success: false, message: err.message, status: err.statusCode });
+      .json({
+        success: false,
+        message: err.message,
+        stack: err.stack,//added for test
+        status: err.statusCode,
+      });
   } else {
     console.error(err);
     res.status(500).json({ status: 'error', message: 'Something went wrong!' });
