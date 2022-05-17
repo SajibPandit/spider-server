@@ -19,7 +19,6 @@ const sendErrorProd = (err, res) => {
       .json({
         success: false,
         message: err.message,
-        stack: err.stack,//added for test
         status: err.statusCode,
       });
   } else {

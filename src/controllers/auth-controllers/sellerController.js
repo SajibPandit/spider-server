@@ -86,7 +86,7 @@ const verify = catchAsync(async (req, res, next) => {
   }
 
   if (otpData.otp == otp
-    //  && otpData.unique_session_id == unique_session_id
+     && otpData.unique_session_id == unique_session_id
      ) {
     const seller = await SellerModel.create({
       phone,
