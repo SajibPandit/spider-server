@@ -85,7 +85,9 @@ const verify = catchAsync(async (req, res, next) => {
     return next(new AppError('Your OTP has been expired.'), 400);
   }
 
-  if (otpData.otp == otp && otpData.unique_session_id == unique_session_id) {
+  if (otpData.otp == otp
+    //  && otpData.unique_session_id == unique_session_id
+     ) {
     const seller = await SellerModel.create({
       phone,
       password,
@@ -137,8 +139,6 @@ const resetPassword = catchAsync(async (req, res, next) => {
   });
 });
 
-
-
 // Function to get seller by id
 const createSellerProfile = catchAsync(async (req, res, next) => {
   const sellerProfile = await SellerProfileModel.create({
@@ -153,8 +153,6 @@ const createSellerProfile = catchAsync(async (req, res, next) => {
     body: { sellerProfile },
   });
 });
-
-
 
 // Function to get seller by id
 const updateSellerProfile = catchAsync(async (req, res, next) => {
