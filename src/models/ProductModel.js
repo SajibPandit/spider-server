@@ -15,11 +15,11 @@ const productSchema = new Schema(
       immutable: true,
     },
 
-    // category: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: 'Category',
-    //   required: [true, 'Please Enter a Category'],
-    // },
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: 'Category',
+      required: [true, 'Please Enter a Category'],
+    },
     parentCategories:{
       type: [Schema.Types.ObjectId],
       ref: 'Category',

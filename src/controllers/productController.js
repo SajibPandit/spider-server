@@ -46,6 +46,9 @@ const getProducts = catchAsync(async (req, res, next) => {
     searchKey,
   } = req.query;
 
+
+  console.log()
+
   const sort = {};
   if (sortBy) {
     const parts = sortBy.split(':');
@@ -180,19 +183,21 @@ const getProductById = catchAsync(async (req, res, next) => {
 const createProduct = catchAsync(async (req, res, next) => {
   const shop = await SellerProfileModel.findOne({ seller: req.seller.id });
 
-  let parents = [];
+  if (!shop) return next(new AppError('Shop not created', 404));
+
+  let parentCategories = [];
 
   const category = await CategoryModel.findOne(req.body.category);
-  if (category) {
-    parents = [...category.parents];
-  }
 
-  if (!shop) return next(new AppError('Shop not created', 404));
+  if (!category) return next(new AppError('Category not exists', 404));
+
+  parentCategories = [...category.parents];
 
   const product = await ProductModel.create({
     ...req.body,
     shop: shop.id,
-    parents,
+    parentCategories,
+    category: category.id,
   });
 
   res.status(201).json({
