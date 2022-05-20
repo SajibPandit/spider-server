@@ -47,8 +47,6 @@ const getProducts = catchAsync(async (req, res, next) => {
   } = req.query;
 
 
-  console.log()
-
   const sort = {};
   if (sortBy) {
     const parts = sortBy.split(':');
@@ -187,7 +185,7 @@ const createProduct = catchAsync(async (req, res, next) => {
 
   let parentCategories = [];
 
-  const category = await CategoryModel.findOne(req.body.category);
+  const category = await CategoryModel.findById(req.body.category);
 
   if (!category) return next(new AppError('Category not exists', 404));
 
