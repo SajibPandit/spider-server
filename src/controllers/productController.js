@@ -46,7 +46,6 @@ const getProducts = catchAsync(async (req, res, next) => {
     searchKey,
   } = req.query;
 
-
   const sort = {};
   if (sortBy) {
     const parts = sortBy.split(':');
@@ -54,9 +53,18 @@ const getProducts = catchAsync(async (req, res, next) => {
   }
 
   let query = {};
+  // if (category) {
+  //   query.category = { $in: category.split(',') };
+  // }
+
+  //modified
   if (category) {
-    query.category = { $in: category.split(',') };
+    query = {
+      ...query,
+      $or: [{ category }, { parentCategories: { $in: [category] } }],
+    };
   }
+
   if (searchKey) {
     query.title = { $regex: searchKey, $options: 'i' };
   }
@@ -65,6 +73,8 @@ const getProducts = catchAsync(async (req, res, next) => {
     query = { ...query, price: { $gte: minPrice, $lte: maxPrice } };
   else if (minPrice) query = { ...query, price: { $gte: minPrice } };
   else if (maxPrice) query = { ...query, price: { $lte: maxPrice } };
+
+  // { "parentCategories": { "$in": [category] } }
 
   let products = await ProductModel.find(query, [], {
     limit: parseInt(limit), // if limit is undefined then it will be ignored automatically
@@ -117,6 +127,7 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    total: products.length,
     body: { products },
   });
 });
@@ -142,6 +153,7 @@ const getNearestProducts = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    total: products.length,
     body: { products },
   });
 });
