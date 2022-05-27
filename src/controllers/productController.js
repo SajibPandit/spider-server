@@ -164,6 +164,7 @@ const getSellerProducts = catchAsync(async (req, res, next) => {
   if (!shop) return next(new AppError('Shop not created', 404));
 
   const products = await ProductModel.find({ shop: shop.id })
+    .sort({createdAt : -1})
     .populate('category')
     .populate({ path: 'shop', populate: 'seller' })
     .populate('reviews');
