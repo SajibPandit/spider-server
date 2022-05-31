@@ -23,6 +23,7 @@ const createFormattedCategory = (categories, parentId = null) => {
       _id: cate._id,
       name: cate.name,
       slug: cate.slug,
+      icon: cate.icon,
       children: createFormattedCategory(categories, cate._id),
     });
   }
@@ -80,6 +81,7 @@ exports.createCategory = catchAsync(async (req, res, next) => {
       lower: true,
       trim: true,
     }),
+    icon: req.body.icon,
   };
 
   let parents = [];
@@ -149,10 +151,16 @@ const deleteSubCategory = async category => {
 };
 
 exports.getSingleCategory = catchAsync(async (req, res, next) => {
+  //Changed by Sajib
+  await CategoryModel.updateMany(
+    { _id: req.params.id },
+    { $inc: { clicks: 1 } },
+  );
   CategoryModel.find({ _id: req.params.id }).then(category => {
     if (category.length === 0) {
       return next(new AppError('Category Not Found', 404));
     }
+
     CategoryModel.find({}).exec((error, categories) => {
       if (error) {
         return next(new AppError(err.message, 400));
@@ -162,7 +170,7 @@ exports.getSingleCategory = catchAsync(async (req, res, next) => {
           req.params.id,
           categories,
           res,
-          category //passing for solve url problem
+          category, //passing for solve url problem
         );
         return res.status(200).json({
           success: true,

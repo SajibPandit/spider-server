@@ -18,10 +18,15 @@ const categorySchema = new Schema(
       trim: true,
     },
     parentId: { type: Schema.Types.ObjectId, ref: 'Category' },
-    parents : {
-      type:[Schema.Types.ObjectId],
-      ref: 'Category'
-    }
+    parents: {
+      type: [Schema.Types.ObjectId],
+      ref: 'Category',
+    },
+    icon: String,
+    clicks: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

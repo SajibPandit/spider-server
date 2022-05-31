@@ -66,8 +66,21 @@ const getProducts = catchAsync(async (req, res, next) => {
   }
 
   if (searchKey) {
-    query.title = { $regex: searchKey, $options: 'i' };
+    query = {...query, $or:[
+      {title:{ $regex: searchKey, $options: 'i' }},
+      {description : { $regex: searchKey, $options: 'i' }}
+    ]  }
+    // query.title = { $regex: searchKey, $options: 'i' };
+    // query.description = { $regex: searchKey, $options: 'i' };
   }
+
+  // if (searchKey) {
+  //   query = {
+  //     ...query,
+  //     $text: { $search: searchKey },
+  //     score: { $meta: 'textScore' },
+  //   };
+  // }
   if (condition) query = { ...query, new: condition === 'new' };
   if (minPrice && maxPrice)
     query = { ...query, price: { $gte: minPrice, $lte: maxPrice } };
@@ -85,6 +98,9 @@ const getProducts = catchAsync(async (req, res, next) => {
     .populate({ path: 'shop', populate: 'seller' })
     .populate('reviews')
     .exec();
+
+  //Changed by Sajib
+  await ProductModel.updateMany(query, { $inc: { impressions: 1 } });
 
   if (minRating)
     products = products.filter(product => product.averageRating >= minRating);
@@ -164,7 +180,7 @@ const getSellerProducts = catchAsync(async (req, res, next) => {
   if (!shop) return next(new AppError('Shop not created', 404));
 
   const products = await ProductModel.find({ shop: shop.id })
-    .sort({createdAt : -1})
+    .sort({ createdAt: -1 })
     .populate('category')
     .populate({ path: 'shop', populate: 'seller' })
     .populate('reviews');
@@ -182,6 +198,10 @@ const getProductById = catchAsync(async (req, res, next) => {
     .populate('category')
     .populate({ path: 'shop', populate: 'seller' })
     .populate('reviews');
+
+  //Changed by Sajib
+  await ProductModel.updateMany({ _id: productId }, { $inc: { clicks: 1 } });
+
   if (!product) return next(new AppError('Not Found', 404));
 
   res.status(200).json({

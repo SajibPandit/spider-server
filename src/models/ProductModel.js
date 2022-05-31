@@ -20,7 +20,7 @@ const productSchema = new Schema(
       ref: 'Category',
       required: [true, 'Please Enter a Category'],
     },
-    parentCategories:{
+    parentCategories: {
       type: [Schema.Types.ObjectId],
       ref: 'Category',
     },
@@ -54,6 +54,18 @@ const productSchema = new Schema(
     reviews: [{ type: Schema.Types.ObjectId, ref: 'Review' }],
     new: { type: Boolean, default: true },
     blocked: { type: Boolean, default: false },
+    clicks: {
+      type: Number,
+      default: 5,
+    },
+    impressions: {
+      type: Number,
+      default: 1,
+    },
+    ratio: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -72,6 +84,33 @@ productSchema.virtual('location').get(function () {
   const seller = SellerProfileModel.findOne({ seller: this.seller });
   return seller.location;
 });
+
+// productSchema.pre('updateMany', async function (next) {
+//   // if (this.isModified('clicks') || this.isModified('impressions')) {
+//   //   this.ratio = this.impresion / this.clicks;
+//   //   next();
+//   // }
+//   const ratio = Number(this.impresion) / Number(this.clicks);
+//   console.log(this.ratio);
+//   console.log(this.clicks);
+//   console.log(this.impressions);
+
+//   this.ratio = ratio;
+//   next();
+// });
+
+productSchema.virtual('ICTRatio').get(function async() {
+  let result;
+  result = this.clicks / this.impressions;
+  this.ratio = result;
+  // productSchema.updateOne({ ratio: result });
+  return result;
+});
+
+// productSchema.index({
+//   title: 'text',
+//   // description: "text"
+// });
 
 productSchema.virtual('averageRating').get(function () {
   if (this.reviews.length === 0) {

@@ -35,6 +35,7 @@ const getChildCategories = (id, categories) => {
     _id: cate.id,
     name: cate.name,
     slug: cate.slug,
+    icon: cate.icon,
     parentId: cate.parentId,
     childrens: getChildCategories(cate.id, categories),
   }));
@@ -49,6 +50,7 @@ const getFormattedSingleCategory = (id, categories, res, currentCategory) => {
     categoryList._id = cate.id;
     categoryList.name = cate.name;
     categoryList.slug = cate.slug;
+    categoryList.icon = cate.icon;
     categoryList.createdAt = cate.createdAt;
     categoryList.parentId = cate.parentId;
     categoryList.parents = cate.parents;
