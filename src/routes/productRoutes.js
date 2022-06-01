@@ -14,6 +14,7 @@ const {
   wishlistProduct,
   getWishlistProducts,
   getFavoriteProducts,
+  getSellerProductsById
 } = require('../controllers/productController');
 const { sellerRestrict } = require('../middlewares/auth-guards/sellerRestrict');
 const { adminRestrict } = require('../middlewares/auth-guards/adminRestrict');
@@ -26,6 +27,7 @@ productRouter.route('/').post(sellerRestrict, createProduct).get(getProducts);
 productRouter.route('/nearest').get(getNearestProducts);
 
 productRouter.route('/seller-products').get(sellerRestrict, getSellerProducts);
+productRouter.route('/seller/:sellerId').get(getSellerProductsById);
 
 productRouter.route('/block/:productId').put(adminRestrict, blockProduct);
 productRouter.route('/unblock/:productId').put(adminRestrict, unblockProduct);

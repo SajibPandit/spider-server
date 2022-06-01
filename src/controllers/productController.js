@@ -66,10 +66,13 @@ const getProducts = catchAsync(async (req, res, next) => {
   }
 
   if (searchKey) {
-    query = {...query, $or:[
-      {title:{ $regex: searchKey, $options: 'i' }},
-      {description : { $regex: searchKey, $options: 'i' }}
-    ]  }
+    query = {
+      ...query,
+      $or: [
+        { title: { $regex: searchKey, $options: 'i' } },
+        { description: { $regex: searchKey, $options: 'i' } },
+      ],
+    };
     // query.title = { $regex: searchKey, $options: 'i' };
     // query.description = { $regex: searchKey, $options: 'i' };
   }
@@ -187,6 +190,26 @@ const getSellerProducts = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
+    body: { products },
+  });
+});
+
+// Function to get all products by seller id
+const getSellerProductsById = catchAsync(async (req, res, next) => {
+  const { sellerId } = req.params;
+
+  const shop = await SellerProfileModel.findOne({ seller: sellerId });
+  if (!shop) return next(new AppError('Shop not created', 404));
+
+  const products = await ProductModel.find({ shop: shop.id })
+    .sort({ createdAt: -1 })
+    .populate('category')
+    .populate({ path: 'shop', populate: 'seller' })
+    .populate('reviews');
+
+  res.status(200).json({
+    success: true,
+    total : products.length,
     body: { products },
   });
 });
@@ -452,4 +475,5 @@ module.exports = {
   getFavoriteProducts,
   getWishlistProducts,
   getNearestProducts,
+  getSellerProductsById,
 };
