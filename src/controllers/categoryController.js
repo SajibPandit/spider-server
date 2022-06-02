@@ -190,11 +190,22 @@ exports.updateCategory = catchAsync(async (req, res, next) => {
   if (!category) {
     return next(new AppError('Category Not Found', 404));
   }
-
-  let categoryObj = {
-    name,
-    icon,
-  };
+  let categoryObj;
+  if (name) {
+    slug = slugify(name, {
+      lower: true,
+      trim: true,
+    });
+    categoryObj = {
+      name,
+      icon,
+      slug,
+    };
+  } else {
+    categoryObj = {
+      icon,
+    };
+  }
 
   let parents = [];
 
