@@ -180,3 +180,48 @@ exports.getSingleCategory = catchAsync(async (req, res, next) => {
     });
   });
 });
+
+//Update Category Endpoint
+exports.updateCategory = catchAsync(async (req, res, next) => {
+  const { name, parentId, icon } = req.body;
+
+  const category = await CategoryModel.findOne({ _id: req.params.id });
+
+  if (!category) {
+    return next(new AppError('Category Not Found', 404));
+  }
+
+  let categoryObj = {
+    name,
+    icon,
+  };
+
+  let parents = [];
+
+  if (parentId) {
+    const parent = await CategoryModel.findById(parentId);
+    if (!parent) {
+      return next(new AppError('Parent Category Not Found', 404));
+    }
+    if (parent) {
+      parents = [...parent.parents];
+    }
+
+    categoryObj.parentId = parentId;
+    parents.push(parentId);
+    categoryObj.parents = parents;
+  }
+
+  const updatedProduct = await CategoryModel.findOneAndUpdate(
+    { _id: req.params.id },
+    categoryObj,
+    { new: true, runValidators: true },
+  );
+
+  if (!updatedProduct) return next(new AppError('Not Found', 404));
+
+  res.status(200).json({
+    success: true,
+    body: { updatedProduct },
+  });
+});

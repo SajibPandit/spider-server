@@ -6,6 +6,7 @@ const {
   deleteCategory,
   getSingleCategory,
   getAllRootCategories,
+  updateCategory
 } = require('../controllers/categoryController');
 const { adminRestrict } = require('../middlewares/auth-guards/adminRestrict');
 
@@ -18,6 +19,7 @@ categoryRouter
 categoryRouter
   .route('/:id')
   .get(getSingleCategory)
-  .delete(adminRestrict, deleteCategory);
+  .delete(adminRestrict, deleteCategory)
+  .put(adminRestrict,updateCategory)
 
 module.exports = categoryRouter;
