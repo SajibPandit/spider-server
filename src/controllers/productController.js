@@ -61,9 +61,18 @@ const getProducts = catchAsync(async (req, res, next) => {
   if (category) {
     query = {
       ...query,
-      $or: [{ category }, { parentCategories: { $in: [category] } }],
+      $or: [{ category:{ $in: category.split(',') } }, { parentCategories:  { $in: category.split(',') }} ],
     };
   }
+
+
+  // //latest modified
+  // if (category) {
+  //   query = {
+  //     ...query,
+  //     $or: [{ category }, { parentCategories: { $in: [category] } }],
+  //   };
+  // }
 
   if (searchKey) {
     query = {
