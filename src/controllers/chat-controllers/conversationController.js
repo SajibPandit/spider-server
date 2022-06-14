@@ -58,7 +58,9 @@ const createConversation = catchAsync(async (req, res, next) => {
 
 const getConversationById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const conversation = await ConversationModel.findById(id);
+  const conversation = await ConversationModel.findById(id)
+    .populate('creator')
+    .populate('participent');
 
   if (!conversation) return next(new AppError('Not Found', 404));
 

@@ -61,8 +61,6 @@ const getMessagesOfConversation = catchAsync(async (req, res, next) => {
   const messages = await MessageModel.find({
     conversationId: id,
   })
-    .populate('sender')
-    .populate('receiver');
 
   if (!messages) return next(new AppError('Not Found', 404));
 
