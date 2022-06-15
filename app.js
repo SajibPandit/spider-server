@@ -21,7 +21,7 @@ require('./src/firebase/services');
 // Creating the express app
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
 // Security Middleware
 app.use(helmet());
 // Compression Middleware
