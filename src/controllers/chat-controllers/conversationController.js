@@ -57,9 +57,13 @@ const createConversation = catchAsync(async (req, res, next) => {
     ],
   });
 
-  if (conversationExist)
-    return next(new AppError('Conversation already exists', 400));
-
+  if (conversationExist){
+    return res.status(200).json({
+      success: true,
+      body: { conversationExist },
+    });
+  }
+    
   const conversation = await ConversationModel.create({
     participent,
     creator: req.seller.id,

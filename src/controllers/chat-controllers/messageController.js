@@ -47,7 +47,7 @@ const createMessage = catchAsync(async (req, res, next) => {
     lastMessage: message._id,
   });
 
-  global.io.emit('new_message', message);
+  global.io.of("/send_message").emit('new_message', message);
 
   res.status(201).json({
     success: true,
