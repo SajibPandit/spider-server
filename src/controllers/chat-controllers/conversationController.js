@@ -43,6 +43,23 @@ const getSellerConversations = catchAsync(async (req, res, next) => {
 
 const createConversation = catchAsync(async (req, res, next) => {
   const { participent } = req.body;
+
+  const conversationExist = await ConversationModel.findOne({
+    $or: [
+      {
+        creator: req.seller.id,
+        participent: participent,
+      },
+      {
+        creator: participent,
+        participent: req.seller.id,
+      },
+    ],
+  });
+
+  if (conversationExist)
+    return next(new AppError('Conversation already exists', 400));
+
   const conversation = await ConversationModel.create({
     participent,
     creator: req.seller.id,
