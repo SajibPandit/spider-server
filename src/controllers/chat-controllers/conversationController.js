@@ -30,7 +30,10 @@ const MessageModel = require('../../models/chat-models/MessageModel');
 const getSellerConversations = catchAsync(async (req, res, next) => {
   const conversations = await ConversationModel.find({
     $or: [{ creator: req.seller.id }, { participent: req.seller.id }],
-  }).populate('conversation');
+  })
+    .populate({ path: 'creator', populate: 'seller' })
+    .populate({ path: 'participant', populate: 'seller' })
+    .populate({ path: 'lastMessage', populate: 'message'})
 
   if (!conversations) return next(new AppError('Not Found', 404));
 
@@ -57,13 +60,13 @@ const createConversation = catchAsync(async (req, res, next) => {
     ],
   });
 
-  if (conversationExist){
+  if (conversationExist) {
     return res.status(200).json({
       success: true,
       body: { conversationExist },
     });
   }
-    
+
   const conversation = await ConversationModel.create({
     participent,
     creator: req.seller.id,
