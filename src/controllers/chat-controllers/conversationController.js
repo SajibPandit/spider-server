@@ -34,6 +34,7 @@ const getSellerConversations = catchAsync(async (req, res, next) => {
     .populate({ path: 'creator', populate: 'seller' })
     .populate({ path: 'participant', populate: 'seller' })
     .populate({ path: 'lastMessage', populate: 'message'})
+    .sort({"updatedAt":-1})
 
   if (!conversations) return next(new AppError('Not Found', 404));
 
