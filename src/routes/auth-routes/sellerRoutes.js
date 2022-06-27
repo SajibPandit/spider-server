@@ -18,6 +18,9 @@ const {
   unblockSeller,
   sellerStat,
   verify,
+  forgotPassword,
+  resetPassword,
+  updatePassword,
 } = require('../../controllers/auth-controllers/sellerController');
 const {
   adminRestrict,
@@ -61,6 +64,11 @@ sellerRouter.route('/stat').get(sellerRestrict, sellerStat);
 
 sellerRouter.route('/block/:sellerId').put(adminRestrict, blockSeller);
 sellerRouter.route('/unblock/:sellerId').put(adminRestrict, unblockSeller);
+
+sellerRouter.route('/forgot-password').put(forgotPassword);
+sellerRouter.route('/reset-password').put(resetPassword);
+sellerRouter.route('/update-password').put(sellerRestrict, updatePassword);
+
 sellerRouter.route('/:id').get(getSingleSeller);
 
 module.exports = sellerRouter;

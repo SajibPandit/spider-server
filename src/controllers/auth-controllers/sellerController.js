@@ -80,14 +80,14 @@ const signUp = catchAsync(async (req, res, next) => {
 const verify = catchAsync(async (req, res, next) => {
   const { phone, password, name, email, unique_session_id, otp } = req.body;
 
+  if (!otp) return next(new AppError('Otp is not provided', 400));
+
   const otpData = await OTPModel.findOne({ phone });
   if (!otpData || otpData.length == 0) {
     return next(new AppError('Your OTP has been expired.'), 400);
   }
 
-  if (otpData.otp == otp
-     && otpData.unique_session_id == unique_session_id
-     ) {
+  if (otpData.otp == otp && otpData.unique_session_id == unique_session_id) {
     const seller = await SellerModel.create({
       phone,
       password,
@@ -118,7 +118,7 @@ const login = catchAsync(async (req, res, next) => {
   const correct = await bcrypt.compare(password, seller.password);
   if (!correct) return next(new AppError('Invalid phone or password', 401));
 
-  sendToken(sellerRole, seller, 201, res);
+  sendToken(sellerRole, seller, 200, res);
 });
 
 const logout = catchAsync(async (req, res, next) => {
@@ -126,19 +126,19 @@ const logout = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true });
 });
 
-const resetPassword = catchAsync(async (req, res, next) => {
-  
-  // const { phone, password } = req.body
+// const resetPassword = catchAsync(async (req, res, next) => {
 
-  // const seller = await SellerModel.findOneAndUpdate({ phone }, { password }, { new: true, runValidators: true })
+//   // const { phone, password } = req.body
 
-  res.status(200).json({
-    success: true,
-    // body: {
-    //   seller
-    // }
-  });
-});
+//   // const seller = await SellerModel.findOneAndUpdate({ phone }, { password }, { new: true, runValidators: true })
+
+//   res.status(200).json({
+//     success: true,
+//     // body: {
+//     //   seller
+//     // }
+//   });
+// });
 
 // Function to get seller by id
 const createSellerProfile = catchAsync(async (req, res, next) => {
@@ -308,13 +308,95 @@ const sellerStat = catchAsync(async (req, res, next) => {
   });
 });
 
+const forgotPassword = catchAsync(async (req, res, next) => {
+  const { phone, unique_session_id } = req.body;
+
+  if (!phone) {
+    return next(new AppError('Provide valid phone number!', 400));
+  }
+
+  const seller = await SellerModel.findOne({ phone });
+  if (!seller) return next(new AppError('Invalid phone number', 401));
+
+  const otp = generateOTP();
+  console.log(otp);
+  handleOTP(phone, otp);
+
+  const isExistOTP = await OTPModel.find({ phone });
+  if (isExistOTP.length != 0) {
+    await OTPModel.findOneAndUpdate({
+      otp,
+      createdAt: Date.now(),
+      unique_session_id,
+    });
+  } else {
+    await OTPModel.create({ phone, otp, unique_session_id });
+  }
+  res.json({
+    success: true,
+    body: {
+      message: 'An OTP has been sent to your number',
+    },
+  });
+});
+
+const resetPassword = catchAsync(async (req, res, next) => {
+  const { phone, newPassword, unique_session_id, otp } = req.body;
+
+  if (!otp) return next(new AppError('Otp is not provided', 400));
+
+  const otpData = await OTPModel.findOne({ phone });
+  if (!otpData || otpData.length == 0) {
+    return next(new AppError('Your OTP has been expired.'), 400);
+  }
+
+  if (otpData.otp == otp && otpData.unique_session_id == unique_session_id) {
+    const seller = await SellerModel.findOne({ phone });
+    seller.password = newPassword;
+    await seller.save();
+
+    res.json({
+      success: true,
+      body: {
+        message: 'Password updated',
+      },
+    });
+  } else {
+    return next(new AppError('OTP not matched', 401));
+  }
+});
+
+const updatePassword = catchAsync(async (req, res, next) => {
+  const { oldPassword, newPassword } = req.body;
+
+  if (!oldPassword || !newPassword) {
+    return next(new AppError('Provide valid password', 400));
+  }
+  const seller = await SellerModel.findOne({ phone: req.seller.phone }).select(
+    '+password',
+  );
+  // if (!seller) return next(new AppError('Invalid phone or password', 401));
+  const correct = await bcrypt.compare(oldPassword, seller.password);
+  if (!correct) return next(new AppError('Invalid password', 401));
+
+  // const seller = await SellerModel.findOne({ phone });
+  seller.password = newPassword;
+  await seller.save();
+
+  res.json({
+    success: true,
+    body: {
+      message: 'Password updated',
+    },
+  });
+});
+
 module.exports = {
   signUp,
   getSellers,
   getSingleSeller,
   login,
   logout,
-  resetPassword,
   createSellerProfile,
   updateSellerProfile,
   editSeller,
@@ -323,4 +405,7 @@ module.exports = {
   unblockSeller,
   sellerStat,
   verify,
+  forgotPassword,
+  resetPassword,
+  updatePassword,
 };

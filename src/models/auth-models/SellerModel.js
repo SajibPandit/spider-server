@@ -89,15 +89,15 @@ sellerSchema.virtual('sellerProfile', {
 });
 
 // Encrypt the password
-sellerSchema.pre(['save'], async function (next) {
+sellerSchema.pre(['save','findOneAndUpdate'], async function (next) {
   // To run encryption only if the password is changed
   if (!this.isModified('password')) return next();
-
   // Hash the password with the cost of 12
   this.password = await bcrypt.hash(this.password, 12);
   this.password_changed_at = Date.now();
   next();
 });
+
 
 // Check if the seller changed password after jwt timestamp
 sellerSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
