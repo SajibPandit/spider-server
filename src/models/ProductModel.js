@@ -62,10 +62,33 @@ const productSchema = new Schema(
       type: Number,
       default: 1,
     },
-    ratio: {
+    averageRating: {
       type: Number,
-      default: 0,
+      default: function () {
+        if (this.reviews.length === 0) {
+          return 0;
+        }
+        const ratings = this.reviews.map(review => review.rating);
+        const sum = ratings.reduce((acc, curr) => acc + curr);
+        return sum / ratings.length;
+      },
     },
+
+    popularity: {
+      type: Number,
+      default: function () {
+        let reviews;
+        if (this.reviews.length === 0) {
+          reviews = 3;
+        } else {
+          const ratings = this.reviews.map(review => review.rating);
+          const sum = ratings.reduce((acc, curr) => acc + curr);
+          reviews = sum / ratings.length;
+        }
+        return Number((this.clicks * reviews) / this.impressions).toFixed(4);
+      },
+    },
+    keywords: [String],
   },
   {
     timestamps: true,
@@ -99,27 +122,31 @@ productSchema.virtual('location').get(function () {
 //   next();
 // });
 
-productSchema.virtual('ICTRatio').get(function async() {
-  let result;
-  result = this.clicks / this.impressions;
-  this.ratio = result;
-  // productSchema.updateOne({ ratio: result });
-  return result;
-});
+// productSchema.virtual('ICTRatio').get(function () {
+//   let reviews;
+//   if (this.reviews.length === 0) {
+//     reviews = 3;
+//   } else {
+//     const ratings = this.reviews.map(review => review.rating);
+//     const sum = ratings.reduce((acc, curr) => acc + curr);
+//     reviews = sum / ratings.length;
+//   }
+//   return Number((this.clicks * reviews) / this.impressions).toFixed(4);
+// });
 
 // productSchema.index({
 //   title: 'text',
 //   // description: "text"
 // });
 
-productSchema.virtual('averageRating').get(function () {
-  if (this.reviews.length === 0) {
-    return 0;
-  }
-  const ratings = this.reviews.map(review => review.rating);
-  const sum = ratings.reduce((acc, curr) => acc + curr);
-  return sum / ratings.length;
-});
+// productSchema.virtual('averageRating').get(function () {
+//   if (this.reviews.length === 0) {
+//     return 0;
+//   }
+//   const ratings = this.reviews.map(review => review.rating);
+//   const sum = ratings.reduce((acc, curr) => acc + curr);
+//   return sum / ratings.length;
+// });
 
 // Creating model from a Schema
 const ProductModel = mongoose.model('Product', productSchema);

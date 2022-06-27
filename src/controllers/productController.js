@@ -53,18 +53,17 @@ const getProducts = catchAsync(async (req, res, next) => {
   }
 
   let query = {};
-  // if (category) {
-  //   query.category = { $in: category.split(',') };
-  // }
 
   //modified
   if (category) {
     query = {
       ...query,
-      $or: [{ category:{ $in: category.split(',') } }, { parentCategories:  { $in: category.split(',') }} ],
+      $or: [
+        { category: { $in: category.split(',') } },
+        { parentCategories: { $in: category.split(',') } },
+      ],
     };
   }
-
 
   // //latest modified
   // if (category) {
@@ -80,19 +79,11 @@ const getProducts = catchAsync(async (req, res, next) => {
       $or: [
         { title: { $regex: searchKey, $options: 'i' } },
         { description: { $regex: searchKey, $options: 'i' } },
+        { keywords: { $in: [new RegExp(searchKey, 'i')] } },
       ],
     };
-    // query.title = { $regex: searchKey, $options: 'i' };
-    // query.description = { $regex: searchKey, $options: 'i' };
   }
 
-  // if (searchKey) {
-  //   query = {
-  //     ...query,
-  //     $text: { $search: searchKey },
-  //     score: { $meta: 'textScore' },
-  //   };
-  // }
   if (condition) query = { ...query, new: condition === 'new' };
   if (minPrice && maxPrice)
     query = { ...query, price: { $gte: minPrice, $lte: maxPrice } };
@@ -108,6 +99,7 @@ const getProducts = catchAsync(async (req, res, next) => {
   })
     .populate('category')
     .populate({ path: 'shop', populate: 'seller' })
+    .populate({ path: 'parentCategories', populate: 'category' })
     .populate('reviews')
     .exec();
 
@@ -218,7 +210,7 @@ const getSellerProductsById = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    total : products.length,
+    total: products.length,
     body: { products },
   });
 });
@@ -249,17 +241,31 @@ const createProduct = catchAsync(async (req, res, next) => {
   if (!shop) return next(new AppError('Shop not created', 404));
 
   let parentCategories = [];
+  let keywords = [];
 
-  const category = await CategoryModel.findById(req.body.category);
+  const category = await CategoryModel.findById(req.body.category).populate({
+    path: 'parents',
+    populate: 'category',
+  });
 
   if (!category) return next(new AppError('Category not exists', 404));
 
-  parentCategories = [...category.parents];
+  keywords.push(category.name);
+
+  if (category.parents.length > 0) {
+    category.parents.map(cat => {
+      console.log(cat.name);
+      parentCategories = [...parentCategories, cat._id];
+      keywords = [...keywords, cat.name];
+      return { parentCategories, keywords };
+    });
+  }
 
   const product = await ProductModel.create({
     ...req.body,
     shop: shop.id,
     parentCategories,
+    keywords,
     category: category.id,
   });
 
