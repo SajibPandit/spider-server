@@ -32,7 +32,7 @@ const getSellerConversations = catchAsync(async (req, res, next) => {
     $or: [{ creator: req.seller.id }, { participent: req.seller.id }],
   })
     .populate({ path: 'creator', populate: 'seller' })
-    .populate({ path: 'participant', populate: 'seller' })
+    .populate({ path: 'participent', populate: 'seller' })
     .populate({ path: 'lastMessage', populate: 'message'})
     .sort({"updatedAt":-1})
 
