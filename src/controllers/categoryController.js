@@ -161,7 +161,7 @@ exports.getSingleCategory = catchAsync(async (req, res, next) => {
       return next(new AppError('Category Not Found', 404));
     }
 
-    CategoryModel.find({}).exec((error, categories) => {
+    CategoryModel.find({}).sort({ clicks: 1 }).exec((error, categories) => {
       if (error) {
         return next(new AppError(err.message, 400));
       }
