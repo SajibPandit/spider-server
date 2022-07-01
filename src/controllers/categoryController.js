@@ -44,7 +44,7 @@ exports.getAllCategory = catchAsync(async (req, res) => {
 });
 
 exports.getAllRootCategories = catchAsync(async (req, res, next) => {
-  CategoryModel.find({}).then(category => {
+  CategoryModel.find({}).sort({ clicks: -1 }).then(category => {
     if (category) {
       let roots = category.filter(cat => cat.parentId == undefined);
       if (roots.length === 0)
