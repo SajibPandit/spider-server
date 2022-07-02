@@ -152,10 +152,6 @@ const deleteSubCategory = async category => {
 
 exports.getSingleCategory = catchAsync(async (req, res, next) => {
   //Changed by Sajib
-  await CategoryModel.updateMany(
-    { _id: req.params.id },
-    { $inc: { clicks: 1 } },
-  );
   CategoryModel.find({ _id: req.params.id }).then(category => {
     if (category.length === 0) {
       return next(new AppError('Category Not Found', 404));

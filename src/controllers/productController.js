@@ -56,6 +56,11 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   //modified
   if (category) {
+    await CategoryModel.updateMany(
+      { _id: { $in: category.split(',') } },
+      { $inc: { clicks: 1 } },
+    );
+
     query = {
       ...query,
       $or: [
