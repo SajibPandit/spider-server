@@ -21,6 +21,7 @@ const {
   forgotPassword,
   resetPassword,
   updatePassword,
+  verifyOtp
 } = require('../../controllers/auth-controllers/sellerController');
 const {
   adminRestrict,
@@ -67,6 +68,7 @@ sellerRouter.route('/unblock/:sellerId').put(adminRestrict, unblockSeller);
 
 sellerRouter.route('/forgot-password').put(forgotPassword);
 sellerRouter.route('/reset-password').put(resetPassword);
+sellerRouter.route('/verify-otp').put(verifyOtp);
 sellerRouter.route('/update-password').put(sellerRestrict, updatePassword);
 
 sellerRouter.route('/:id').get(getSingleSeller);

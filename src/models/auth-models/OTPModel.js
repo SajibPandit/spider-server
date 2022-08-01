@@ -14,6 +14,7 @@ const OTPSchema = new Schema({
     type: String,
     required: true,
   },
+  secret_key: String,
   createdAt: { type: Date, default: Date.now },
 });
 

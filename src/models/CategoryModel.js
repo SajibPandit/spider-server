@@ -22,8 +22,12 @@ const categorySchema = new Schema(
       type: [Schema.Types.ObjectId],
       ref: 'Category',
     },
+    creator: {
+      type: Schema.Types.ObjectId,
+      ref: 'Admin',
+    },
     icon: {
-      type:String,
+      type: String,
       default: null,
     },
     clicks: {

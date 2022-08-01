@@ -340,8 +340,8 @@ const forgotPassword = catchAsync(async (req, res, next) => {
   });
 });
 
-const resetPassword = catchAsync(async (req, res, next) => {
-  const { phone, newPassword, unique_session_id, otp } = req.body;
+const verifyOtp = catchAsync(async (req, res, next) => {
+  const { unique_session_id,phone, otp } = req.body;
 
   if (!otp) return next(new AppError('Otp is not provided', 400));
 
@@ -351,6 +351,36 @@ const resetPassword = catchAsync(async (req, res, next) => {
   }
 
   if (otpData.otp == otp && otpData.unique_session_id == unique_session_id) {
+    // const seller = await SellerModel.findOne({ phone });
+    // seller.password = newPassword;
+    // await seller.save();
+    const secret_key = Math.floor(10000000 + Math.random() * 90000000);
+    otpData.secret_key = secret_key;
+    otpData.save();
+
+    res.json({
+      success: true,
+      body: {
+        message: 'OTP Matched',
+        otpData
+      },
+    });
+  } else {
+    return next(new AppError('OTP not matched', 401));
+  }
+})
+
+const resetPassword = catchAsync(async (req, res, next) => {
+  const { phone, newPassword, secret_key, otp } = req.body;
+
+  // if (!otp) return next(new AppError('Otp is not provided', 400));
+
+  const otpData = await OTPModel.findOne({ phone });
+  if (!otpData || otpData.length == 0) {
+    return next(new AppError('Your took a long time to do this.'), 400);
+  }
+
+  if (otpData.otp == otp && otpData.secret_key == secret_key) {
     const seller = await SellerModel.findOne({ phone });
     seller.password = newPassword;
     await seller.save();
@@ -362,7 +392,7 @@ const resetPassword = catchAsync(async (req, res, next) => {
       },
     });
   } else {
-    return next(new AppError('OTP not matched', 401));
+    return next(new AppError('Invalid data', 401));
   }
 });
 
@@ -408,4 +438,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   updatePassword,
+  verifyOtp
 };
