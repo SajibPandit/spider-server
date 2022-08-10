@@ -15,7 +15,7 @@ const createFormattedCategory = (categories, parentId = null) => {
     category = categories.filter(cat => cat.parentId == undefined);
   } else {
     category = categories.filter(
-      cat => cat.parentId?.toString() === parentId.toString(),
+      cat => cat.parentId.toString() === parentId.toString(),
     );
   }
   for (cate of category) {
