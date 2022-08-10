@@ -227,7 +227,7 @@ const getProfile = catchAsync(async (req, res, next) => {
   const shop = await SellerProfileModel.findOne({ seller: req.seller.id });
 
   let averageRating = 0;
-  const products = await ProductModel.find({ shop: shop?.id })
+  const products = await ProductModel.find({ shop: shop.id })
     .populate('reviews')
     .exec();
   if (products.length !== 0) {
