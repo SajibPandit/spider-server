@@ -60,7 +60,7 @@ exports.getAllRootCategories = catchAsync(async (req, res, next) => {
             _id: root.id,
             name: root.name,
             slug: root.slug,
-            icon: cate.icon,
+            icon: root.icon,
             createdAt: root.createdAt,
             childrens: getChildCategories(root.id, category),
           });
