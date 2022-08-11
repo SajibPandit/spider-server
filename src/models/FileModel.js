@@ -18,6 +18,10 @@ const fileSchema = new Schema(
       trim: true,
       required: [true, 'Endpoint is required'],
     },
+    url:{
+      type: String,
+      trim: true,
+    }
   },
   {
     timestamps: true,

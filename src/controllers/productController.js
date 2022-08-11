@@ -120,8 +120,8 @@ const getProducts = catchAsync(async (req, res, next) => {
       if (!product.shop) return false;
 
       const distance = getDistanceFromLatLonInKm(
-        product.shop?.location.coordinates[0],
-        product.shop?.location.coordinates[1],
+        product.shop.location.coordinates[0],
+        product.shop.location.coordinates[1],
         latitude,
         longitude,
       );
@@ -134,14 +134,14 @@ const getProducts = catchAsync(async (req, res, next) => {
       if (!b.shop) return -1;
 
       const distanceA = getDistanceFromLatLonInKm(
-        a.shop?.location.coordinates[0],
-        a.shop?.location.coordinates[1],
+        a.shop.location.coordinates[0],
+        a.shop.location.coordinates[1],
         latitude,
         longitude,
       );
       const distanceB = getDistanceFromLatLonInKm(
-        b.shop?.location.coordinates[0],
-        b.shop?.location.coordinates[1],
+        b.shop.location.coordinates[0],
+        b.shop.location.coordinates[1],
         latitude,
         longitude,
       );

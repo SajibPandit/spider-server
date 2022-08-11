@@ -12,6 +12,7 @@ const uploadFile = catchAsync(async (req, res, next) => {
   const file = await FileModel.create({
     name: req.file.filename,
     endpoint: `/files/${req.file.filename}`,
+    url: uri
   });
 
   res.status(200).json({
