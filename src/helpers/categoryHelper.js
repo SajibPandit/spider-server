@@ -1,7 +1,7 @@
 const Category = require('../models/CategoryModel');
 
 const getParentCategories = (id, categories, parents, currentCategory) => {
-  const category = categories.filter(c => c.id.toString() === id.toString());
+  const category = categories.filter(c => c.id?.toString() === id?.toString());
 
   //Adding current category to the url
   parents.unshift({
@@ -29,7 +29,7 @@ const getParentCategories = (id, categories, parents, currentCategory) => {
 };
 
 const getChildCategories = (id, categories) => {
-  const childCategories = categories.filter(c => c.parentId.toString() === id);
+  const childCategories = categories.filter(c => c.parentId?.toString() === id);
 
   return childCategories.map(cate => ({
     _id: cate.id,
@@ -45,7 +45,7 @@ const getFormattedSingleCategory = (id, categories, res, currentCategory) => {
   const categoryList = {};
   const parents = [];
   const childs = [];
-  let category = categories.filter(c => c.id.toString() === id);
+  let category = categories.filter(c => c.id?.toString() === id);
   for (cate of category) {
     categoryList._id = cate.id;
     categoryList.name = cate.name;
