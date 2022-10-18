@@ -3,6 +3,7 @@
 // Importing mongoose and Schema
 const mongoose = require('mongoose');
 const SellerProfileModel = require('./auth-models/profile-models/SellerProfileModel');
+const SellerModel = require('../models/auth-models/SellerModel');
 const Schema = mongoose.Schema;
 
 // Creating a schema
@@ -86,6 +87,15 @@ const productSchema = new Schema(
           reviews = sum / ratings.length;
         }
         return Number((this.clicks * reviews) / this.impressions).toFixed(4);
+      },
+    },
+
+    impressionCost: {
+      type: Number,
+      default: async function () {
+        let ictr = 1 / (this.clicks / this.impressions);
+        let sample = await SellerModel.aggregate([{ $sample: { size: 1 } }]);
+        return sample.impressionCost + ictr;
       },
     },
     keywords: [String],

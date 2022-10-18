@@ -46,6 +46,11 @@ const sellerSchema = new Schema(
     profilePic: {
       type: String,
     },
+    
+    //16 OCT 2022
+    recent_sent_products: [Schema.Types.ObjectId],
+
+    recent_clicked_products: [Schema.Types.ObjectId],
 
     registered_at: {
       type: Date,
@@ -89,7 +94,7 @@ sellerSchema.virtual('sellerProfile', {
 });
 
 // Encrypt the password
-sellerSchema.pre(['save','findOneAndUpdate'], async function (next) {
+sellerSchema.pre(['save', 'findOneAndUpdate'], async function (next) {
   // To run encryption only if the password is changed
   if (!this.isModified('password')) return next();
   // Hash the password with the cost of 12
@@ -97,7 +102,6 @@ sellerSchema.pre(['save','findOneAndUpdate'], async function (next) {
   this.password_changed_at = Date.now();
   next();
 });
-
 
 // Check if the seller changed password after jwt timestamp
 sellerSchema.methods.changedPasswordAfter = function (JWTTimestamp) {

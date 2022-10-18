@@ -120,6 +120,9 @@ const updateCategory = catchAsync(async (req, res, next) => {
 });
 
 const deleteCategory = catchAsync(async (req, res, next) => {
+  const category = await CategoryModel.findById(req.params.id);
+  if (!category) return next(new AppError('Invalid Parent Id', 404));
+  
   
 })
 

@@ -79,6 +79,22 @@ const getProducts = catchAsync(async (req, res, next) => {
   //   };
   // }
 
+  //get nearest products
+  // if (maxDistance && latitude && longitude) {
+  //   query = {
+  //     ...query,
+  //     location: {
+  //       $near: {
+  //         $geometry: {
+  //           type: 'Point',
+  //           coordinates: [parseFloat(longitude), parseFloat(latitude)],
+  //         },
+  //         $maxDistance: parseInt(maxDistance),
+  //       },
+  //     },
+  //   };
+  // }
+
   if (searchKey) {
     query = {
       ...query,
@@ -150,6 +166,31 @@ const getProducts = catchAsync(async (req, res, next) => {
   }
 
   if (!sortBy) products = products.sort(() => 0.5 - Math.random());
+
+  //code for trcking send products
+  //check if the seller is logged in or not
+  if (req.seller) {
+    const seller = await SellerModel.findOne({ seller: req.seller.id });
+
+    let recent_sent_products = [...seller.recent_sent_products];
+
+    //add new item to the first of the array
+    products.forEach(value => {
+      recent_sent_products.unshift(value._id);
+    });
+
+    //delete last item from the array
+    if (recent_sent_products.length > 50) {
+      let extra_products = recent_sent_products - 50;
+      recent_sent_products.splice(-extra_products);
+    }
+
+    await SellerModel.findOneAndUpdate(
+      { _id: seller._id },
+      recent_sent_products,
+      { runValidators: true },
+    );
+  }
 
   res.status(200).json({
     success: true,
@@ -229,10 +270,32 @@ const getProductById = catchAsync(async (req, res, next) => {
     .populate({ path: 'shop', populate: 'seller' })
     .populate('reviews');
 
+  if (!product) return next(new AppError('Not Found', 404));
+
   //Changed by Sajib
+  //increment product click count
   await ProductModel.updateMany({ _id: productId }, { $inc: { clicks: 1 } });
 
-  if (!product) return next(new AppError('Not Found', 404));
+  //code for trcking recent_clicked_products
+  //check if the seller is logged in or not
+  if (req.seller) {
+    const seller = await SellerModel.findOne({ seller: req.seller.id });
+
+    let recent_clicked_products = [...seller.recent_clicked_products];
+
+    //delete last item from the array
+    if (recent_clicked_products.length > 49) {
+      recent_clicked_products.pop();
+    }
+    //add new item to the first of the array
+    recent_clicked_products.unshift(product._id);
+
+    await SellerModel.findOneAndUpdate(
+      { _id: seller._id },
+      recent_clicked_products,
+      { runValidators: true },
+    );
+  }
 
   res.status(200).json({
     success: true,
