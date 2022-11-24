@@ -126,20 +126,6 @@ const logout = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true });
 });
 
-// const resetPassword = catchAsync(async (req, res, next) => {
-
-//   // const { phone, password } = req.body
-
-//   // const seller = await SellerModel.findOneAndUpdate({ phone }, { password }, { new: true, runValidators: true })
-
-//   res.status(200).json({
-//     success: true,
-//     // body: {
-//     //   seller
-//     // }
-//   });
-// });
-
 // Function to get seller by id
 const createSellerProfile = catchAsync(async (req, res, next) => {
   const sellerProfile = await SellerProfileModel.create({
@@ -164,6 +150,17 @@ const updateSellerProfile = catchAsync(async (req, res, next) => {
   );
 
   if (!sellerProfile) return next(new AppError('Not found!', 404));
+
+  // console.log(sellerPro)
+
+  //updated
+  if (req.body.location) {
+    await ProductModel.findOneAndUpdate(
+      { shop: sellerProfile._id },
+      { location: req.body.location },
+      { new: true, runValidators: true },
+    );
+  }
 
   res.status(200).json({
     success: true,
@@ -341,7 +338,7 @@ const forgotPassword = catchAsync(async (req, res, next) => {
 });
 
 const verifyOtp = catchAsync(async (req, res, next) => {
-  const { unique_session_id,phone, otp } = req.body;
+  const { unique_session_id, phone, otp } = req.body;
 
   if (!otp) return next(new AppError('Otp is not provided', 400));
 
@@ -362,13 +359,13 @@ const verifyOtp = catchAsync(async (req, res, next) => {
       success: true,
       body: {
         message: 'OTP Matched',
-        otpData
+        otpData,
       },
     });
   } else {
     return next(new AppError('OTP not matched', 401));
   }
-})
+});
 
 const resetPassword = catchAsync(async (req, res, next) => {
   const { phone, newPassword, secret_key, otp } = req.body;
@@ -438,5 +435,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   updatePassword,
-  verifyOtp
+  verifyOtp,
 };

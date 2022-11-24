@@ -21,6 +21,7 @@ const categorySchema = new Schema(
     parents: {
       type: [Schema.Types.ObjectId],
       ref: 'Category',
+      default: [],
     },
     creator: {
       type: Schema.Types.ObjectId,

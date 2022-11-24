@@ -36,16 +36,19 @@ const productSchema = new Schema(
       required: [true, 'Price is required'],
     },
 
-    // location: {
-    //   type: {
-    //     type: String,
-    //     enum: ['Point'],
-    //     default: 'Point',
-    //   },
-    //   coordinates: {
-    //     type: [Number],
-    //   },
-    // },
+    //new
+
+    location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+      },
+    },
 
     isAvailable: { type: Boolean, default: true },
     description: { type: String },
@@ -92,10 +95,14 @@ const productSchema = new Schema(
 
     impressionCost: {
       type: Number,
-      default: async function () {
+      // set: function(){
+      //   let ictr = 1 / (this.clicks / this.impressions);
+      //   console.log('From iC', ictr);
+      //   return this.impressionCost + ictr;
+      // },
+      default: function () {
         let ictr = 1 / (this.clicks / this.impressions);
-        let sample = await SellerModel.aggregate([{ $sample: { size: 1 } }]);
-        return sample.impressionCost + ictr;
+        return this.impressionCost + ictr;
       },
     },
     keywords: [String],
@@ -110,13 +117,15 @@ const productSchema = new Schema(
     },
   },
 );
+//new
+productSchema.index({ location: '2dsphere' });
 
-// productSchema.index({ location: '2dsphere' });
 
-productSchema.virtual('location').get(function () {
-  const seller = SellerProfileModel.findOne({ seller: this.seller });
-  return seller.location;
-});
+
+// productSchema.virtual('location').get(function () {
+//   const seller = SellerProfileModel.findOne({ seller: this.seller });
+//   return seller.location;
+// });
 
 // productSchema.pre('updateMany', async function (next) {
 //   // if (this.isModified('clicks') || this.isModified('impressions')) {
@@ -144,21 +153,24 @@ productSchema.virtual('location').get(function () {
 //   return Number((this.clicks * reviews) / this.impressions).toFixed(4);
 // });
 
-// productSchema.index({
-//   title: 'text',
-//   // description: "text"
-// });
 
-// productSchema.virtual('averageRating').get(function () {
-//   if (this.reviews.length === 0) {
-//     return 0;
-//   }
-//   const ratings = this.reviews.map(review => review.rating);
-//   const sum = ratings.reduce((acc, curr) => acc + curr);
-//   return sum / ratings.length;
-// });
+// auto calculate impression cost
+// productSchema.pre(
+//   ['save'
+//   , 'findOneAndUpdate', 'updateOne', 'updateMany'
+// ],
+//   function (next) {
+//     let product = this;
+//     let impression = 1 / (product.clicks / product.impressions);
+//     console.log(product.clicks, product.impressions)
+//     console.log(impression);
+//     this.impressionCost = impression
+//     next();
+//   },
+// );
 
 // Creating model from a Schema
 const ProductModel = mongoose.model('Product', productSchema);
+
 
 module.exports = ProductModel;

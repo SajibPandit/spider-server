@@ -33,10 +33,13 @@ const createReview = catchAsync(async (req, res, next) => {
 
 const getReviewsOfProduct = catchAsync(async (req, res, next) => {
   const { product } = req.params;
-  console.log(req.params);
+  const { limit, skip } = req.query;
+
   if (!product) return next(new AppError('Bad Request', 400));
 
-  const reviews = await ReviewModel.find({ product });
+  const reviews = await ReviewModel.find({ product })
+    .limit(parseInt(limit))
+    .skip(parseInt(skip));
 
   res.status(201).json({
     success: true,

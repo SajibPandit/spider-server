@@ -46,7 +46,6 @@ const sellerSchema = new Schema(
     profilePic: {
       type: String,
     },
-    
     //16 OCT 2022
     recent_sent_products: [Schema.Types.ObjectId],
 

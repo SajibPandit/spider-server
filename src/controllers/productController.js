@@ -1,6 +1,7 @@
 'use strict';
 
 const SellerProfileModel = require('../models/auth-models/profile-models/SellerProfileModel');
+// const SellerModel = require('../models/auth-models/SellerModel')
 const ProductModel = require('../models/ProductModel');
 const ReportModel = require('../models/reportModel');
 const ReviewModel = require('../models/reviewModel');
@@ -44,12 +45,15 @@ const getProducts = catchAsync(async (req, res, next) => {
     longitude,
     latitude,
     searchKey,
+    userId,
   } = req.query;
 
   const sort = {};
   if (sortBy) {
     const parts = sortBy.split(':');
     sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
+  } else {
+    sort.impressionCost = 1;
   }
 
   let query = {};
@@ -71,29 +75,22 @@ const getProducts = catchAsync(async (req, res, next) => {
     };
   }
 
-  // //latest modified
-  // if (category) {
-  //   query = {
-  //     ...query,
-  //     $or: [{ category }, { parentCategories: { $in: [category] } }],
-  //   };
-  // }
-
-  //get nearest products
-  // if (maxDistance && latitude && longitude) {
-  //   query = {
-  //     ...query,
-  //     location: {
-  //       $near: {
-  //         $geometry: {
-  //           type: 'Point',
-  //           coordinates: [parseFloat(longitude), parseFloat(latitude)],
-  //         },
-  //         $maxDistance: parseInt(maxDistance),
-  //       },
-  //     },
-  //   };
-  // }
+  // get nearest products
+  if (maxDistance && latitude && longitude) {
+    query = {
+      ...query,
+      location: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [longitude, latitude],
+          },
+          $maxDistance: maxDistance * 1000,
+          // $minDistance: <distance in meters>
+        },
+      },
+    };
+  }
 
   if (searchKey) {
     query = {
@@ -102,6 +99,7 @@ const getProducts = catchAsync(async (req, res, next) => {
         { title: { $regex: searchKey, $options: 'i' } },
         { description: { $regex: searchKey, $options: 'i' } },
         { keywords: { $in: [new RegExp(searchKey, 'i')] } },
+        { title: { $in: new RegExp(searchKey.split(' '), 'i') } },
       ],
     };
   }
@@ -111,8 +109,6 @@ const getProducts = catchAsync(async (req, res, next) => {
     query = { ...query, price: { $gte: minPrice, $lte: maxPrice } };
   else if (minPrice) query = { ...query, price: { $gte: minPrice } };
   else if (maxPrice) query = { ...query, price: { $lte: maxPrice } };
-
-  // { "parentCategories": { "$in": [category] } }
 
   let products = await ProductModel.find(query, [], {
     limit: parseInt(limit), // if limit is undefined then it will be ignored automatically
@@ -125,58 +121,74 @@ const getProducts = catchAsync(async (req, res, next) => {
     .populate('reviews')
     .exec();
 
+  //increase impression by one and calculate impression cost
+  if (products.length > 0) {
+    products.forEach(async function (product) {
+      let impressionCost = (
+        product.impressionCost +
+        1 / (product.clicks / product.impressions)
+      ).toFixed(2);
+      let impression = product.impression + 1;
+      await ProductModel.findByIdAndUpdate(product.id, {
+        impressionCost,
+        impression,
+      });
+    });
+  }
   //Changed by Sajib
-  await ProductModel.updateMany(query, { $inc: { impressions: 1 } });
+  // await ProductModel.updateMany(query, { $inc: { impressions: 1 } });
 
   if (minRating)
     products = products.filter(product => product.averageRating >= minRating);
 
-  if (maxDistance && latitude && longitude) {
-    products = products.filter(product => {
-      if (!product.shop) return false;
+  // if (maxDistance && latitude && longitude) {
+  //   products = products.filter(product => {
+  //     if (!product.shop) return false;
 
-      const distance = getDistanceFromLatLonInKm(
-        product.shop.location.coordinates[0],
-        product.shop.location.coordinates[1],
-        latitude,
-        longitude,
-      );
-      return distance < maxDistance;
-    });
-  }
-  if (sortBy === 'distance' && latitude && longitude) {
-    products = products.sort((a, b) => {
-      if (!a.shop) return 1;
-      if (!b.shop) return -1;
+  //     const distance = getDistanceFromLatLonInKm(
+  //       product.shop.location.coordinates[0],
+  //       product.shop.location.coordinates[1],
+  //       latitude,
+  //       longitude,
+  //     );
+  //     return distance < maxDistance;
+  //   });
+  // }
+  // if (sortBy === 'distance' && latitude && longitude) {
+  //   products = products.sort((a, b) => {
+  //     if (!a.shop) return 1;
+  //     if (!b.shop) return -1;
 
-      const distanceA = getDistanceFromLatLonInKm(
-        a.shop.location.coordinates[0],
-        a.shop.location.coordinates[1],
-        latitude,
-        longitude,
-      );
-      const distanceB = getDistanceFromLatLonInKm(
-        b.shop.location.coordinates[0],
-        b.shop.location.coordinates[1],
-        latitude,
-        longitude,
-      );
-      return distanceA - distanceB;
-    });
-  }
+  //     const distanceA = getDistanceFromLatLonInKm(
+  //       a.shop.location.coordinates[0],
+  //       a.shop.location.coordinates[1],
+  //       latitude,
+  //       longitude,
+  //     );
+  //     const distanceB = getDistanceFromLatLonInKm(
+  //       b.shop.location.coordinates[0],
+  //       b.shop.location.coordinates[1],
+  //       latitude,
+  //       longitude,
+  //     );
+  //     return distanceA - distanceB;
+  //   });
+  // }
 
-  if (!sortBy) products = products.sort(() => 0.5 - Math.random());
+  // if (!sortBy) products = products.sort(() => 0.5 - Math.random());
 
   //code for trcking send products
   //check if the seller is logged in or not
-  if (req.seller) {
-    const seller = await SellerModel.findOne({ seller: req.seller.id });
+  if (userId) {
+    const sellerProfile = await SellerProfileModel.findOne({ seller: userId });
 
-    let recent_sent_products = [...seller.recent_sent_products];
+    let recent_sent_products = [...sellerProfile.recent_sent_products];
 
     //add new item to the first of the array
     products.forEach(value => {
-      recent_sent_products.unshift(value._id);
+      if (!recent_sent_products.includes(value._id)) {
+        recent_sent_products.unshift(value._id);
+      }
     });
 
     //delete last item from the array
@@ -185,12 +197,12 @@ const getProducts = catchAsync(async (req, res, next) => {
       recent_sent_products.splice(-extra_products);
     }
 
-    await SellerModel.findOneAndUpdate(
-      { _id: seller._id },
-      recent_sent_products,
-      { runValidators: true },
-    );
+    sellerProfile.recent_sent_products = recent_sent_products;
+
+    await sellerProfile.save();
   }
+
+  //const total =await ProductModel.countDocuments();
 
   res.status(200).json({
     success: true,
@@ -198,6 +210,8 @@ const getProducts = catchAsync(async (req, res, next) => {
     body: { products },
   });
 });
+
+
 
 const getNearestProducts = catchAsync(async (req, res, next) => {
   const { maxDistance, long, lat } = req.query;
@@ -264,6 +278,7 @@ const getSellerProductsById = catchAsync(async (req, res, next) => {
 
 const getProductById = catchAsync(async (req, res, next) => {
   const { productId } = req.params;
+  const { userId } = req.query;
 
   let product = await ProductModel.findOne({ _id: productId })
     .populate('category')
@@ -278,23 +293,30 @@ const getProductById = catchAsync(async (req, res, next) => {
 
   //code for trcking recent_clicked_products
   //check if the seller is logged in or not
-  if (req.seller) {
-    const seller = await SellerModel.findOne({ seller: req.seller.id });
+  if (userId) {
+    const profile = await SellerModel.findById(userId);
 
-    let recent_clicked_products = [...seller.recent_clicked_products];
+    let recent_clicked_products = [...profile.recent_clicked_products];
 
     //delete last item from the array
     if (recent_clicked_products.length > 49) {
       recent_clicked_products.pop();
     }
-    //add new item to the first of the array
-    recent_clicked_products.unshift(product._id);
 
-    await SellerModel.findOneAndUpdate(
-      { _id: seller._id },
-      recent_clicked_products,
-      { runValidators: true },
-    );
+    //check if the item is already exists or not
+    if (!recent_clicked_products.includes(product_id)) {
+      //add new item to the first of the array
+      recent_clicked_products.unshift(product._id);
+    }
+
+    profile.recent_clicked_products = recent_clicked_products;
+    await profile.save();
+
+    // await SellerModel.findOneAndUpdate(
+    //   { _id: profile._id },
+    //   recent_clicked_products,
+    //   { runValidators: true },
+    // );
   }
 
   res.status(200).json({
@@ -311,6 +333,7 @@ const createProduct = catchAsync(async (req, res, next) => {
 
   let parentCategories = [];
   let keywords = [];
+  let impressionCost = 0;
 
   const category = await CategoryModel.findById(req.body.category).populate({
     path: 'parents',
@@ -323,11 +346,21 @@ const createProduct = catchAsync(async (req, res, next) => {
 
   if (category.parents.length > 0) {
     category.parents.map(cat => {
-      console.log(cat.name);
       parentCategories = [...parentCategories, cat._id];
       keywords = [...keywords, cat.name];
       return { parentCategories, keywords };
     });
+  }
+  //Check any product is exists or not
+  const count = await ProductModel.countDocuments();
+
+  //if not exists then impressionCost will be 5 otherwise it will take from one random document
+  if (count == 0) {
+    impressionCost = 5;
+  } else {
+    const product = await ProductModel.aggregate([{ $sample: { size: 1 } }]);
+    console.log(product);
+    impressionCost = product[0].impressionCost;
   }
 
   const product = await ProductModel.create({
@@ -336,6 +369,8 @@ const createProduct = catchAsync(async (req, res, next) => {
     parentCategories,
     keywords,
     category: category.id,
+    location: shop.location, //new
+    impressionCost,
   });
 
   res.status(201).json({

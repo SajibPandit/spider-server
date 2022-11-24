@@ -47,7 +47,7 @@ const createMessage = catchAsync(async (req, res, next) => {
     lastMessage: message._id,
   });
 
-  global.io.of("/send_message").emit('new_message', message);
+  global.io.of('/send_message').emit('new_message', message);
 
   res.status(201).json({
     success: true,
@@ -57,10 +57,12 @@ const createMessage = catchAsync(async (req, res, next) => {
 
 const getMessagesOfConversation = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  console.log(id);
+  const { limit, skip } = req.query;
   const messages = await MessageModel.find({
     conversationId: id,
   })
+    .limit(parseInt(limit))
+    .skip(parseInt(skip));
 
   if (!messages) return next(new AppError('Not Found', 404));
 

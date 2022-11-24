@@ -6,6 +6,18 @@ const validator = require('validator');
 const Schema = mongoose.Schema;
 const SellerModel = require('../SellerModel');
 
+const pointSchema = new Schema({
+  type: {
+    type: String,
+    enum: ['Point'],
+    // required: true
+  },
+  coordinates: {
+    type: [Number],
+    required: true,
+  },
+});
+
 // Creating a schema
 const sellerProfileSchema = new Schema({
   seller: {
@@ -35,6 +47,19 @@ const sellerProfileSchema = new Schema({
     default: null,
   },
 
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      required: true,
+      default: 'Point',
+    },
+    coordinates: {
+      type: [Number],
+      required: true,
+    },
+  },
+
   // location: {
   //   type: String,
   //   trim: true,
@@ -55,15 +80,26 @@ const sellerProfileSchema = new Schema({
     type: String,
     trim: true,
   },
-  location: {
-    coordinates: {
-      type: [Number],
-      required: true,
-    },
-  },
+
+  //16 OCT 2022
+  recent_sent_products: [Schema.Types.ObjectId],
+
+  recent_clicked_products: [Schema.Types.ObjectId],
+  // location: {
+  //   type: {
+  //     type: String,
+  //     enum: ['Point'],
+  //   },
+  //   coordinates: {
+  //     type: [Number],
+  //     // required: true,
+  //   },
+  // },
 
   blocked: { type: Boolean, default: false },
 });
+
+sellerProfileSchema.index({ location: '2dsphere' });
 
 sellerProfileSchema.virtual('products', {
   ref: 'Product',

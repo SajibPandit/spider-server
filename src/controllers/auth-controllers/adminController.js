@@ -107,7 +107,6 @@ const getSingleAdmin = catchAsync(async (req, res, next) => {
   // await admin.populate({ path: 'admin' }).execPopulate()
   // const admin = await AdminProfileModel.findOne({ admin: req.params.id }).populate('admin');
   // admin.pop
-  console.log(admin);
 
   if (!admin) return next(new AppError('Not found!', 404));
 
