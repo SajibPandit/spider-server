@@ -15,27 +15,17 @@ const AppError = require('../utils/appError');
 //   });
 // });
 
-const createFormattedCategory = (categories, parentId = null) => {
-  const categoryList = [];
-  let category;
-  if (parentId == null) {
-    category = categories.filter(cat => cat.parentId == undefined);
-  } else {
-    category = categories.filter(
-      cat => cat.parentId.toString() === parentId.toString(),
-    );
-  }
-  for (cate of category) {
-    categoryList.push({
-      _id: cate._id,
-      name: cate.name,
-      slug: cate.slug,
-      icon: cate.icon,
-      children: createFormattedCategory(categories, cate._id),
-    });
-  }
+const getChildCategories = (id, categories) => {
+  const childCategories = categories.filter(c => c.parentId?.toString() === id);
 
-  return categoryList;
+  return childCategories.map(cate => ({
+    _id: cate.id,
+    name: cate.name,
+    slug: cate.slug,
+    icon: cate.icon,
+    parentId: cate.parentId,
+    childrens: getChildCategories(cate.id, categories),
+  }));
 };
 
 
