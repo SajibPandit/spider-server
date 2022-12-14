@@ -7,13 +7,70 @@ const CategoryModel = require('../models/CategoryModel');
 const ProductModel = require('../models/ProductModel');
 const AppError = require('../utils/appError');
 
+// const getAllRootCategories = catchAsync(async (req, res, next) => {
+//   const categories = await CategoryModel.find({ parentId: undefined });
+//   res.json({
+//     success: true,
+//     body: { total: categories.length, data: categories },
+//   });
+// });
+
+const createFormattedCategory = (categories, parentId = null) => {
+  const categoryList = [];
+  let category;
+  if (parentId == null) {
+    category = categories.filter(cat => cat.parentId == undefined);
+  } else {
+    category = categories.filter(
+      cat => cat.parentId.toString() === parentId.toString(),
+    );
+  }
+  for (cate of category) {
+    categoryList.push({
+      _id: cate._id,
+      name: cate.name,
+      slug: cate.slug,
+      icon: cate.icon,
+      children: createFormattedCategory(categories, cate._id),
+    });
+  }
+
+  return categoryList;
+};
+
+
 const getAllRootCategories = catchAsync(async (req, res, next) => {
-  const categories = await CategoryModel.find({ parentId: undefined });
-  res.json({
-    success: true,
-    body: { total: categories.length, data: categories },
+  CategoryModel.find({}).sort({ clicks: -1 }).then(category => {
+    if (category) {
+      let roots = category.filter(cat => cat.parentId == undefined);
+      if (roots.length === 0)
+        return res.json({
+          success: true,
+          body: { total: 0, data: [] },
+        });
+      let formattedCat = [];
+      let childs = [];
+      if (roots) {
+        for (root of roots) {
+          formattedCat.push({
+            _id: root.id,
+            name: root.name,
+            slug: root.slug,
+            icon: root.icon,
+            createdAt: root.createdAt,
+            childrens: getChildCategories(root.id, category),
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        body: { total: formattedCat.length, data: formattedCat },
+      });
+    }
   });
 });
+
 
 const createCategory = catchAsync(async (req, res, next) => {
   const { name, parentId, ...rest } = req.body;
