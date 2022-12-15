@@ -83,7 +83,7 @@ const getProducts = catchAsync(async (req, res, next) => {
         $near: {
           $geometry: {
             type: 'Point',
-            coordinates: [latitude,longitude],
+            coordinates: [latitude, longitude],
           },
           $maxDistance: maxDistance * 1000,
           // $minDistance: <distance in meters>
@@ -121,22 +121,25 @@ const getProducts = catchAsync(async (req, res, next) => {
     .populate('reviews')
     .exec();
 
-  //increase impression by one and calculate impression cost
-  if (products.length > 0) {
+  // increase impression by one and calculate impression cost
+  // if (products.length > 0) {
     products.forEach(async function (product) {
       let impressionCost = (
         product.impressionCost +
         1 / (product.clicks / product.impressions)
       ).toFixed(2);
+      console.log(impressionCost);
+      console.log(product.impression);
       let impression = product.impression + 1;
+      console.log("Hi...",impression);
       await ProductModel.findByIdAndUpdate(product.id, {
         impressionCost,
         impression,
       });
     });
-  }
+  // }
   // Changed by Sajib
-  await ProductModel.updateMany(query, { $inc: { impressions: 1 } });
+  // await ProductModel.updateMany(query, { $inc: { impressions: 1 } });
 
   if (minRating)
     products = products.filter(product => product.averageRating >= minRating);
@@ -210,8 +213,6 @@ const getProducts = catchAsync(async (req, res, next) => {
     body: { products },
   });
 });
-
-
 
 const getNearestProducts = catchAsync(async (req, res, next) => {
   const { maxDistance, long, lat } = req.query;
