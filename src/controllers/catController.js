@@ -7,6 +7,11 @@ const CategoryModel = require('../models/CategoryModel');
 const ProductModel = require('../models/ProductModel');
 const AppError = require('../utils/appError');
 
+const {
+  getChildCategories,
+  getFormattedSingleCategory,
+} = require('../helpers/categoryHelper');
+
 // const getAllRootCategories = catchAsync(async (req, res, next) => {
 //   const categories = await CategoryModel.find({ parentId: undefined });
 //   res.json({
@@ -15,18 +20,18 @@ const AppError = require('../utils/appError');
 //   });
 // });
 
-const getChildCategories = (id, categories) => {
-  const childCategories = categories.filter(c => c.parentId?.toString() === id);
+// const getChildCategories = (id, categories) => {
+//   const childCategories = categories.filter(c => c.parentId?.toString() === id);
 
-  return childCategories.map(cate => ({
-    _id: cate.id,
-    name: cate.name,
-    slug: cate.slug,
-    icon: cate.icon,
-    parentId: cate.parentId,
-    childrens: getChildCategories(cate.id, categories),
-  }));
-};
+//   return childCategories.map(cate => ({
+//     _id: cate.id,
+//     name: cate.name,
+//     slug: cate.slug,
+//     icon: cate.icon,
+//     parentId: cate.parentId,
+//     childrens: getChildCategories(cate.id, categories),
+//   }));
+// };
 
 const getAllRootCategories = catchAsync(async (req, res, next) => {
   CategoryModel.find({})
@@ -123,62 +128,102 @@ const getFormattedUrl = async (id, url) => {
   }
 };
 
+// const getSingleCategory = catchAsync(async (req, res, next) => {
+//   let category = await CategoryModel.findById(req.params.id);
+//   if (!category) return next(new AppError('Invalid Category Id'));
+
+//   // console.log(category)
+//   let formattedChildren = [];
+
+//   let childrens = await CategoryModel.find({
+//     parentId: category._id,
+//   });
+
+//   for(children of childrens) {
+//     let childs = await CategoryModel.find({
+//       parentId: children._id,
+//     });
+
+//     console.log(childs);
+
+//     children.childrens = childs;
+
+//     formattedChildren.push(children)
+//   }
+
+//   // childrens.forEach(async function (children,i) {
+//   //   let childs = await CategoryModel.find({
+//   //     parentId: children._id,
+//   //   });
+
+//   //   childrens[i].childrens = childs;
+
+//   //   // children.childrens = childs;
+//   // });
+
+//   let url = [];
+//   url.unshift(category);
+//   if (category.parentId) {
+//     await getFormattedUrl(category.parentId, url);
+//   }
+
+//   const {
+//     parents,
+//     icons,
+//     clicks,
+//     _id,
+//     name,
+//     slug,
+//     parentId,
+//     createdAt,
+//     updatedAt,
+//   } = category;
+
+//   //increment category click count
+//   await CategoryModel.findByIdAndUpdate(category.id, { $inc: { clicks: 1 } });
+
+//   res.status(200).json({
+//     success: true,
+//     body: {
+//       _id,
+//       name,
+//       slug,
+//       parents,
+//       icons,
+//       clicks,
+//       parentId,
+//       createdAt,
+//       updatedAt,
+//       url,
+//       childrens:formattedChildren,
+//     },
+//   });
+// });
+
 const getSingleCategory = catchAsync(async (req, res, next) => {
-  let category = await CategoryModel.findById(req.params.id);
-  if (!category) return next(new AppError('Invalid Category Id'));
+  //Changed by Sajib
+  CategoryModel.find({ _id: req.params.id }).then(category => {
+    if (category.length === 0) {
+      return next(new AppError('Category Not Found', 404));
+    }
 
-  // console.log(category)
-
-  let childrens = await CategoryModel.find({
-    parentId: category._id,
-  });
-
-  childrens.forEach(async function (children,i) {
-    let childs = await CategoryModel.find({
-      parentId: children._id,
+    CategoryModel.find({}).sort({ clicks: -1 }).exec((error, categories) => {
+      if (error) {
+        return next(new AppError(err.message, 400));
+      }
+      if (categories) {
+        const categoryList = getFormattedSingleCategory(
+          req.params.id,
+          categories,
+          res,
+          category, //passing for solve url problem
+        );
+        return res.status(200).json({
+          success: true,
+          body: categoryList,
+        });
+      }
     });
-
-    childrens[i].childrens = childs;
-
-    // children.childrens = childs;
-  });
-
-  let url = [];
-  url.unshift(category);
-  if (category.parentId) {
-    await getFormattedUrl(category.parentId, url);
-  }
-
-  const {
-    parents,
-    icons,
-    clicks,
-    _id,
-    name,
-    slug,
-    parentId,
-    createdAt,
-    updatedAt,
-  } = category;
-
-  //increment category click count
-  await CategoryModel.findByIdAndUpdate(category.id, { $inc: { clicks: 1 } });
-
-  res.status(200).json({
-    success: true,
-    body: {
-      _id,
-      name,
-      slug,
-      parents,
-      icons,
-      clicks,
-      parentId,
-      createdAt,
-      updatedAt,
-      url,
-      childrens,
-    },
   });
 });
 
