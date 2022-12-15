@@ -32,7 +32,7 @@ function deg2rad(deg) {
 
 // Function to get all products
 const getProducts = catchAsync(async (req, res, next) => {
-  const {
+  let {
     sortBy,
     limit,
     skip,
@@ -46,43 +46,48 @@ const getProducts = catchAsync(async (req, res, next) => {
     latitude,
     searchKey,
     userId,
-    history
+    history,
   } = req.query;
 
   const sort = {};
+
+  let willFilteredProducts = [];
+
   if (sortBy) {
     const parts = sortBy.split(':');
     sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
   } else {
     sort.impressionCost = 1;
-    if(skip) skip=0
-  }
+    if ((userId && skip == 0) || (userId && !skip)) {
+      await SellerProfileModel.findOneAndUpdate(
+        { seller: userId },
+        { recent_sent_products: [] },
+      );
+    }
 
-  let willFilteredProducts = [];
+    if (userId && skip != 0) {
+      const sellerProfile = await SellerProfileModel.findOne({
+        seller: userId,
+      });
 
-  if(userId && skip==0){
-    await SellerProfileModel.findOneAndUpdate({ seller: userId },{recent_sent_products:[]});
-  }
+      willFilteredProducts = [...sellerProfile.recent_sent_products];
+    }
 
-  if(userId && skip!=0){
-    const sellerProfile = await SellerProfileModel.findOne({ seller: userId });
-
-    willFilteredProducts = [...sellerProfile.recent_sent_products]
-  }
-
-  if(!userId && history){
-    willFilteredProducts = history.split(',');
+    if (!userId && history) {
+      willFilteredProducts = history.split(',');
+    }
+    if (skip) skip = 0;
   }
 
   let query = {};
 
-  if(willFilteredProducts){
+  if (willFilteredProducts) {
     query = {
       ...query,
-      '_id': { 
-        $nin: willFilteredProducts
-      }
-    }
+      _id: {
+        $nin: willFilteredProducts,
+      },
+    };
   }
 
   //modified
@@ -315,6 +320,21 @@ const getProductById = catchAsync(async (req, res, next) => {
   //Changed by Sajib
   //increment product click count
   await ProductModel.updateMany({ _id: productId }, { $inc: { clicks: 1 } });
+
+  const reviews = await ReviewModel.find({ product: productId });
+
+  let rating;
+  if (reviews.length === 0) {
+    rating = 2.5;
+  } else {
+    rating = product.averageRating;
+  }
+
+  let popularity = Number(((product.clicks + 1) * rating) / product.impressions).toFixed(
+    4,
+  );
+
+  await ProductModel.findOneAndUpdate({ _id: productId },{popularity})
 
   //code for trcking recent_clicked_products
   //check if the seller is logged in or not

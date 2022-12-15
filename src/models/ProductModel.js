@@ -81,8 +81,8 @@ const productSchema = new Schema(
       type: Number,
       default: function () {
         let reviews;
-        if (this.reviews.length === 0) {
-          reviews = 3;
+        if (averageRating === 0) {
+          reviews = 2.5;
         } else {
           const ratings = this.reviews.map(review => review.rating);
           const sum = ratings.reduce((acc, curr) => acc + curr);
