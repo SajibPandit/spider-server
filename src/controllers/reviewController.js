@@ -3,6 +3,17 @@ const ProductModel = require('../models/ProductModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
+const updateAverageRating = async function (product) {
+  const reviews = await ReviewModel.find({ product });
+  const ratings = reviews.map(review => review.rating);
+  const sum = ratings.reduce((acc, curr) => acc + curr);
+
+  await ProductModel.findOneAndUpdate(
+    { _id: product },
+    { averageRating: sum / ratings.length },
+  );
+};
+
 const createReview = catchAsync(async (req, res, next) => {
   const { product, rating, content } = req.body;
   const seller = req.seller.id;
@@ -24,6 +35,7 @@ const createReview = catchAsync(async (req, res, next) => {
 
   availableProduct.reviews.push(review._id);
   availableProduct.save();
+  await updateAverageRating(product);
 
   res.status(201).json({
     success: true,
@@ -58,6 +70,8 @@ const updateReview = catchAsync(async (req, res, next) => {
     { new: true },
   );
   if (!review) return next(new AppError('Review not found', 404));
+
+  await updateAverageRating(product);
 
   res.status(201).json({
     success: true,
