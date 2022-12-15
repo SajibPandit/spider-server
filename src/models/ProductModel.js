@@ -140,7 +140,7 @@ productSchema.index({ location: '2dsphere' });
 //   next();
 // });
 
-productSchema.virtual("averageRating").get(function(){
+productSchema.virtual("avgRating").get(function(){
   if (this.reviews.length === 0) {
     return 0;
   }
@@ -178,12 +178,6 @@ productSchema.virtual("averageRating").get(function(){
 //   },
 // );
 
-sellerSchema.virtual('sellerProfile', {
-  ref: 'SellerProfile',
-  localField: '_id',
-  foreignField: 'seller',
-  justOne: true,
-});
 
 // Creating model from a Schema
 const ProductModel = mongoose.model('Product', productSchema);
