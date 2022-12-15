@@ -135,8 +135,8 @@ const getProducts = catchAsync(async (req, res, next) => {
       });
     });
   }
-  //Changed by Sajib
-  // await ProductModel.updateMany(query, { $inc: { impressions: 1 } });
+  // Changed by Sajib
+  await ProductModel.updateMany(query, { $inc: { impressions: 1 } });
 
   if (minRating)
     products = products.filter(product => product.averageRating >= minRating);
