@@ -54,6 +54,7 @@ const getProducts = catchAsync(async (req, res, next) => {
     sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
   } else {
     sort.impressionCost = 1;
+    if(skip) skip=0
   }
 
   let query = {};
@@ -122,22 +123,19 @@ const getProducts = catchAsync(async (req, res, next) => {
     .exec();
 
   // increase impression by one and calculate impression cost
-  // if (products.length > 0) {
+  if (products.length > 0) {
     products.forEach(async function (product) {
       let impressionCost = (
         product.impressionCost +
         1 / (product.clicks / product.impressions)
       ).toFixed(2);
-      console.log(impressionCost);
-      console.log(product.impression);
-      let impression = product.impression + 1;
-      console.log("Hi...",impression);
+      let impressions = product.impressions + 1;
       await ProductModel.findByIdAndUpdate(product.id, {
         impressionCost,
-        impression,
+        impressions,
       });
     });
-  // }
+  }
   // Changed by Sajib
   // await ProductModel.updateMany(query, { $inc: { impressions: 1 } });
 
