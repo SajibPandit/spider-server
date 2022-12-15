@@ -46,6 +46,7 @@ const getProducts = catchAsync(async (req, res, next) => {
     latitude,
     searchKey,
     userId,
+    history
   } = req.query;
 
   const sort = {};
@@ -57,7 +58,32 @@ const getProducts = catchAsync(async (req, res, next) => {
     if(skip) skip=0
   }
 
+  let willFilteredProducts = [];
+
+  if(userId && skip==0){
+    await SellerProfileModel.findOneAndUpdate({ seller: userId },{recent_sent_products:[]});
+  }
+
+  if(userId && skip!=0){
+    const sellerProfile = await SellerProfileModel.findOne({ seller: userId });
+
+    willFilteredProducts = [...sellerProfile.recent_sent_products]
+  }
+
+  if(!userId && history){
+    willFilteredProducts = history.split(',');
+  }
+
   let query = {};
+
+  if(willFilteredProducts){
+    query = {
+      ...query,
+      '_id': { 
+        $nin: willFilteredProducts
+      }
+    }
+  }
 
   //modified
   if (category) {
