@@ -141,6 +141,16 @@ productSchema.index({ location: '2dsphere' });
 //   next();
 // });
 
+productSchema.virtual("avgRating").get(function(){
+  if (this.reviews.length === 0) {
+    return 0;
+  }
+  const ratings = this.reviews.map(review => review.rating);
+  const sum = ratings.reduce((acc, curr) => acc + curr);
+  console.log(sum / ratings.length);
+  return sum / ratings.length;
+})
+
 // productSchema.virtual('ICTRatio').get(function () {
 //   let reviews;
 //   if (this.reviews.length === 0) {
