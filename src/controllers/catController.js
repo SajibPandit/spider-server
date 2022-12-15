@@ -28,39 +28,39 @@ const getChildCategories = (id, categories) => {
   }));
 };
 
-
 const getAllRootCategories = catchAsync(async (req, res, next) => {
-  CategoryModel.find({}).sort({ clicks: -1 }).then(category => {
-    if (category) {
-      let roots = category.filter(cat => cat.parentId == undefined);
-      if (roots.length === 0)
-        return res.json({
-          success: true,
-          body: { total: 0, data: [] },
-        });
-      let formattedCat = [];
-      let childs = [];
-      if (roots) {
-        for (root of roots) {
-          formattedCat.push({
-            _id: root.id,
-            name: root.name,
-            slug: root.slug,
-            icon: root.icon,
-            createdAt: root.createdAt,
-            childrens: getChildCategories(root.id, category),
+  CategoryModel.find({})
+    .sort({ clicks: -1 })
+    .then(category => {
+      if (category) {
+        let roots = category.filter(cat => cat.parentId == undefined);
+        if (roots.length === 0)
+          return res.json({
+            success: true,
+            body: { total: 0, data: [] },
           });
+        let formattedCat = [];
+        let childs = [];
+        if (roots) {
+          for (root of roots) {
+            formattedCat.push({
+              _id: root.id,
+              name: root.name,
+              slug: root.slug,
+              icon: root.icon,
+              createdAt: root.createdAt,
+              childrens: getChildCategories(root.id, category),
+            });
+          }
         }
+
+        res.json({
+          success: true,
+          body: { total: formattedCat.length, data: formattedCat },
+        });
       }
-
-      res.json({
-        success: true,
-        body: { total: formattedCat.length, data: formattedCat },
-      });
-    }
-  });
+    });
 });
-
 
 const createCategory = catchAsync(async (req, res, next) => {
   const { name, parentId, ...rest } = req.body;
@@ -130,7 +130,17 @@ const getSingleCategory = catchAsync(async (req, res, next) => {
   // console.log(category)
 
   let childrens = await CategoryModel.find({
-    parentId:category._id,
+    parentId: category._id,
+  });
+
+  childrens.forEach(async function (children,i) {
+    let childs = await CategoryModel.find({
+      parentId: children._id,
+    });
+
+    childrens[i].childrens = childs;
+
+    // children.childrens = childs;
   });
 
   let url = [];
@@ -190,15 +200,17 @@ const updateCategory = catchAsync(async (req, res, next) => {
   //   let { parentId } = await CategoryModel.findById(req.params.id);
   // }
 
-  const isDuplicatedName = await CategoryModel.find({
-    parentId,
-    name: { $regex: new RegExp(name, 'i') },
-  });
-
-  if (isDuplicatedName.length > 0)
-    return next(
-      new AppError('Duplicate category name under same parent or root', 400),
-    );
+  if(name){
+    const isDuplicatedName = await CategoryModel.find({
+      parentId,
+      name: { $regex: new RegExp(name, 'i') },
+    });
+  
+    if (isDuplicatedName.length > 0)
+      return next(
+        new AppError('Duplicate category name under same parent or root', 400),
+      );
+  }
 
   //change parents array based on parent category id
   if (parentId) {
@@ -217,11 +229,14 @@ const updateCategory = catchAsync(async (req, res, next) => {
 
   const category = await CategoryModel.findByIdAndUpdate(
     req.params.id,
-    { 
-      // name, 
-      parentId, parents, ...rest },
+    {
+      // name,
+      parentId,
+      parents,
+      ...rest,
+    },
     { new: true, runValidators: true },
-  )
+  );
 
   if (name) {
     await ProductModel.updateMany(
