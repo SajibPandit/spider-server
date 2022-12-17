@@ -68,6 +68,7 @@ const productSchema = new Schema(
     },
     averageRating: {
       type: Number,
+      default : 0,
       default: function () {
         if (this.reviews.length === 0) {
           return 0;
@@ -81,7 +82,7 @@ const productSchema = new Schema(
       type: Number,
       default: function () {
         let reviews;
-        if (averageRating === 0) {
+        if (this.averageRating === 0) {
           reviews = 2.5;
         } else {
           const ratings = this.reviews.map(review => review.rating);

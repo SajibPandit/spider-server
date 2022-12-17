@@ -389,7 +389,7 @@ const createProduct = catchAsync(async (req, res, next) => {
 
   keywords.push(category.name);
 
-  if (category.parents.length > 0) {
+  if (category.parents?.length > 0) {
     category.parents.map(cat => {
       parentCategories = [...parentCategories, cat._id];
       keywords = [...keywords, cat.name];
