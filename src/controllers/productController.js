@@ -59,8 +59,8 @@ const getProducts = catchAsync(async (req, res, next) => {
     if (parts[0] === 'bestMatch') {
       sort.impressionCost = 1;
       if ((userId && skip == 0) || (userId && !skip)) {
-        await SellerModel.findOneAndUpdate(
-          { _id: userId },
+        await SellerModel.findByIdAndUpdate(
+          userId,
           { recent_sent_products: [] },
         );
       } else {

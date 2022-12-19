@@ -93,7 +93,7 @@ sellerSchema.virtual('sellerProfile', {
 });
 
 // Encrypt the password
-sellerSchema.pre(['save', 'findOneAndUpdate'], async function (next) {
+sellerSchema.pre(['save'], async function (next) {
   // To run encryption only if the password is changed
   if (!this.isModified('password')) return next();
   // Hash the password with the cost of 12
