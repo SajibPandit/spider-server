@@ -1,7 +1,7 @@
 'use strict';
 
 const SellerProfileModel = require('../models/auth-models/profile-models/SellerProfileModel');
-// const SellerModel = require('../models/auth-models/SellerModel')
+const SellerModel = require('../models/auth-models/SellerModel');
 const ProductModel = require('../models/ProductModel');
 const ReportModel = require('../models/reportModel');
 const ReviewModel = require('../models/reviewModel');
@@ -55,26 +55,29 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   if (sortBy) {
     const parts = sortBy.split(':');
-    sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
-  } else {
-    sort.impressionCost = 1;
-    if ((userId && skip == 0) || (userId && !skip)) {
-      await SellerProfileModel.findOneAndUpdate(
-        { seller: userId },
-        { recent_sent_products: [] },
-      );
+
+    if (parts[0] === 'bestMatch') {
+      sort.impressionCost = 1;
+      if ((userId && skip == 0) || (userId && !skip)) {
+        await SellerModel.findOneAndUpdate(
+          { _id: userId },
+          { recent_sent_products: [] },
+        );
+      } else {
+        sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
+      }
     }
 
     if (userId && skip != 0) {
-      const sellerProfile = await SellerProfileModel.findOne({
-        seller: userId,
+      const sellerProfile = await SellerModel.findOne({
+        _id: userId,
       });
 
       willFilteredProducts = [...sellerProfile.recent_sent_products];
     }
 
     if (!userId && history) {
-      willFilteredProducts = history.split(',');
+      willFilteredProducts = history.split('+');
     }
     if (skip) skip = 0;
   }
@@ -212,7 +215,7 @@ const getProducts = catchAsync(async (req, res, next) => {
   //code for trcking send products
   //check if the seller is logged in or not
   if (userId) {
-    const sellerProfile = await SellerProfileModel.findOne({ seller: userId });
+    const sellerProfile = await SellerModel.findOne({ _id: userId });
 
     let recent_sent_products = [...sellerProfile.recent_sent_products];
 
@@ -330,11 +333,11 @@ const getProductById = catchAsync(async (req, res, next) => {
     rating = product.averageRating;
   }
 
-  let popularity = Number(((product.clicks + 1) * rating) / product.impressions).toFixed(
-    4,
-  );
+  let popularity = Number(
+    ((product.clicks + 1) * rating) / product.impressions,
+  ).toFixed(4);
 
-  await ProductModel.findOneAndUpdate({ _id: productId },{popularity})
+  await ProductModel.findOneAndUpdate({ _id: productId }, { popularity });
 
   //code for trcking recent_clicked_products
   //check if the seller is logged in or not

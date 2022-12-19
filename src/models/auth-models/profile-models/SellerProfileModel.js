@@ -82,9 +82,9 @@ const sellerProfileSchema = new Schema({
   },
 
   //16 OCT 2022
-  recent_sent_products: [Schema.Types.ObjectId],
+  // recent_sent_products: [Schema.Types.ObjectId],
 
-  recent_clicked_products: [Schema.Types.ObjectId],
+  // recent_clicked_products: [Schema.Types.ObjectId],
   // location: {
   //   type: {
   //     type: String,
