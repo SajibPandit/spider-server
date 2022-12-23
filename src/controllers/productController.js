@@ -77,7 +77,8 @@ const getProducts = catchAsync(async (req, res, next) => {
     }
 
     if (!userId && history) {
-      willFilteredProducts = history.split('+');
+      willFilteredProducts = history.split(',');
+      console.log(willFilteredProducts)
     }
     if (skip) skip = 0;
   }
