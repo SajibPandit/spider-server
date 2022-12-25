@@ -112,6 +112,14 @@ const createCategory = catchAsync(async (req, res, next) => {
     slug,
   });
 
+  await CategoryModel.create({
+    name: 'Others',
+    slug: 'others',
+    creator: req.admin.id,
+    parentId:category._id,
+    icon: 'https://cdn-icons-png.flaticon.com/512/8215/8215476.png',
+  });
+
   res.status(201).json({
     success: true,
     body: { category },
@@ -207,23 +215,25 @@ const getSingleCategory = catchAsync(async (req, res, next) => {
       return next(new AppError('Category Not Found', 404));
     }
 
-    CategoryModel.find({}).sort({ clicks: -1 }).exec((error, categories) => {
-      if (error) {
-        return next(new AppError(err.message, 400));
-      }
-      if (categories) {
-        const categoryList = getFormattedSingleCategory(
-          req.params.id,
-          categories,
-          res,
-          category, //passing for solve url problem
-        );
-        return res.status(200).json({
-          success: true,
-          body: categoryList,
-        });
-      }
-    });
+    CategoryModel.find({})
+      .sort({ clicks: -1 })
+      .exec((error, categories) => {
+        if (error) {
+          return next(new AppError(err.message, 400));
+        }
+        if (categories) {
+          const categoryList = getFormattedSingleCategory(
+            req.params.id,
+            categories,
+            res,
+            category, //passing for solve url problem
+          );
+          return res.status(200).json({
+            success: true,
+            body: categoryList,
+          });
+        }
+      });
   });
 });
 
@@ -245,12 +255,12 @@ const updateCategory = catchAsync(async (req, res, next) => {
   //   let { parentId } = await CategoryModel.findById(req.params.id);
   // }
 
-  if(name){
+  if (name) {
     const isDuplicatedName = await CategoryModel.find({
       parentId,
       name: { $regex: new RegExp(name, 'i') },
     });
-  
+
     if (isDuplicatedName.length > 0)
       return next(
         new AppError('Duplicate category name under same parent or root', 400),
@@ -403,6 +413,7 @@ const deleteCategory = catchAsync(async (req, res, next) => {
         name: 'Others',
         slug: 'others',
         creator: req.admin.id,
+        icon: 'https://cdn-icons-png.flaticon.com/512/8215/8215476.png',
       });
 
       await ProductModel.updateMany(
