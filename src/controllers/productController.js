@@ -118,7 +118,7 @@ const getProducts = catchAsync(async (req, res, next) => {
         $near: {
           $geometry: {
             type: 'Point',
-            coordinates: [latitude, longitude],
+            coordinates: [longitude, latitude],
           },
           $maxDistance: maxDistance * 1000,
           // $minDistance: <distance in meters>

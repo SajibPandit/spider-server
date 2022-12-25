@@ -118,7 +118,7 @@ const productSchema = new Schema(
   },
 );
 //new
-productSchema.index({ location: '2dsphere' });
+productSchema.index({ 'location.coordinates': '2d' });
 
 
 

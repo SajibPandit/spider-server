@@ -93,7 +93,7 @@ const sellerProfileSchema = new Schema({
   blocked: { type: Boolean, default: false },
 });
 
-sellerProfileSchema.index({ location: '2dsphere' });
+sellerProfileSchema.index({ 'location.coordinates': '2d' });
 
 sellerProfileSchema.virtual('products', {
   ref: 'Product',
