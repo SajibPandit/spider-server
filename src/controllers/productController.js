@@ -59,13 +59,12 @@ const getProducts = catchAsync(async (req, res, next) => {
     if (parts[0] === 'bestMatch') {
       sort.impressionCost = 1;
       if ((userId && skip == 0) || (userId && !skip)) {
-        await SellerModel.findByIdAndUpdate(
-          userId,
-          { recent_sent_products: [] },
-        );
-      } else {
-        sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
+        await SellerModel.findByIdAndUpdate(userId, {
+          recent_sent_products: [],
+        });
       }
+    } else {
+      sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
     }
 
     if (userId && skip != 0) {
@@ -78,7 +77,7 @@ const getProducts = catchAsync(async (req, res, next) => {
 
     if (!userId && history) {
       willFilteredProducts = history.split(',');
-      console.log(willFilteredProducts)
+      console.log(willFilteredProducts);
     }
     if (skip) skip = 0;
   }

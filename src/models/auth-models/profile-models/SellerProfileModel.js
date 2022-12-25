@@ -60,12 +60,6 @@ const sellerProfileSchema = new Schema({
     },
   },
 
-  // location: {
-  //   type: String,
-  //   trim: true,
-  //   default: null
-  // },
-
   description: {
     type: String,
     trim: true,
