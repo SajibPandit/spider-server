@@ -118,9 +118,7 @@ const productSchema = new Schema(
   },
 );
 //new
-productSchema.index({ 'location.coordinates': '2d' });
-
-
+productSchema.index({ location: '2dsphere' });
 
 // productSchema.virtual('location').get(function () {
 //   const seller = SellerProfileModel.findOne({ seller: this.seller });

@@ -121,7 +121,6 @@ const getProducts = catchAsync(async (req, res, next) => {
             coordinates: [longitude, latitude],
           },
           $maxDistance: maxDistance * 1000,
-          // $minDistance: <distance in meters>
         },
       },
     };

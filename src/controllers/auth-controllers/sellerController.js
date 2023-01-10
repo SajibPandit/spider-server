@@ -128,8 +128,16 @@ const logout = catchAsync(async (req, res, next) => {
 
 // Function to get seller by id
 const createSellerProfile = catchAsync(async (req, res, next) => {
+  // const {location} = req.body;
+
+  // location = {
+  //   type : 'Point',
+  //   coordinates : [location.coordinates[1], location.coordinates[0]],
+  // }
+
   const sellerProfile = await SellerProfileModel.create({
     ...req.body,
+    // location,
     seller: req.seller.id,
   });
 
@@ -151,11 +159,9 @@ const updateSellerProfile = catchAsync(async (req, res, next) => {
 
   if (!sellerProfile) return next(new AppError('Not found!', 404));
 
-  // console.log(sellerPro)
-
   //updated
   if (req.body.location) {
-    await ProductModel.findOneAndUpdate(
+    await ProductModel.updateMany(
       { shop: sellerProfile._id },
       { location: req.body.location },
       { new: true, runValidators: true },
