@@ -45,7 +45,7 @@ const getProducts = catchAsync(async (req, res, next) => {
     longitude,
     latitude,
     searchKey,
-    userId,
+    // userId,
     history,
   } = req.query;
 
@@ -56,30 +56,37 @@ const getProducts = catchAsync(async (req, res, next) => {
   if (sortBy) {
     const parts = sortBy.split(':');
 
-    if (parts[0] === 'bestMatch') {
-      sort.impressionCost = 1;
-      if ((userId && skip == 0) || (userId && !skip)) {
-        await SellerModel.findByIdAndUpdate(userId, {
-          recent_sent_products: [],
-        });
-      }
-    } else {
+    if(history && parts[0] === 'bestMatch' && skip==0){
+      willFilteredProducts = history.split(',');
+    }else {
       sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
     }
 
-    if (userId && skip != 0) {
-      const sellerProfile = await SellerModel.findOne({
-        _id: userId,
-      });
+    // if (parts[0] === 'bestMatch') {
+    //   sort.impressionCost = 1;
+    //   if ((userId && skip == 0) || (userId && !skip)) {
+    //     await SellerModel.findByIdAndUpdate(userId, {
+    //       recent_sent_products: [],
+    //     });
+    //   }
+    //   // skip = 0;
+    // } else {
+    //   sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
+    // }
 
-      willFilteredProducts = [...sellerProfile.recent_sent_products];
-    }
+    // if (userId && skip != 0) {
+    //   const sellerProfile = await SellerModel.findOne({
+    //     _id: userId,
+    //   });
 
-    if (!userId && history) {
-      willFilteredProducts = history.split(',');
-      console.log(willFilteredProducts);
-    }
-    if (skip) skip = 0;
+    //   willFilteredProducts = [...sellerProfile.recent_sent_products];
+    // }
+
+    // if (!userId && history) {
+    //   willFilteredProducts = history.split(',');
+    //   console.log(willFilteredProducts);
+    // }
+    // // if (skip) skip = 0;
   }
 
   let query = {};
@@ -92,6 +99,7 @@ const getProducts = catchAsync(async (req, res, next) => {
       },
     };
   }
+  // console.log(willFilteredProducts);
 
   //modified
   if (category) {
@@ -127,6 +135,7 @@ const getProducts = catchAsync(async (req, res, next) => {
   }
 
   if (searchKey) {
+    searchKey = searchKey.trim();
     query = {
       ...query,
       $or: [
@@ -158,10 +167,18 @@ const getProducts = catchAsync(async (req, res, next) => {
   // increase impression by one and calculate impression cost
   if (products.length > 0) {
     products.forEach(async function (product) {
-      let impressionCost = (
-        product.impressionCost +
-        1 / (product.clicks / product.impressions)
-      ).toFixed(2);
+      let impressionCost;
+      if (product.averageRating == 0) {
+        impressionCost = (
+          product.impressionCost +
+          product.impressions / product.clicks
+        ).toFixed(2);
+      } else {
+        impressionCost = (
+          product.impressionCost +
+          (product.impressions / product.clicks) * (5 / product.averageRating)
+        ).toFixed(2);
+      }
       let impressions = product.impressions + 1;
       await ProductModel.findByIdAndUpdate(product.id, {
         impressionCost,
@@ -213,28 +230,28 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   //code for trcking send products
   //check if the seller is logged in or not
-  if (userId) {
-    const sellerProfile = await SellerModel.findOne({ _id: userId });
+  // if (userId) {
+  //   const sellerProfile = await SellerModel.findOne({ _id: userId });
 
-    let recent_sent_products = [...sellerProfile.recent_sent_products];
+  //   let recent_sent_products = [...sellerProfile.recent_sent_products];
 
-    //add new item to the first of the array
-    products.forEach(value => {
-      if (!recent_sent_products.includes(value._id)) {
-        recent_sent_products.unshift(value._id);
-      }
-    });
+  //   //add new item to the first of the array
+  //   products.forEach(value => {
+  //     if (!recent_sent_products.includes(value._id)) {
+  //       recent_sent_products.unshift(value._id);
+  //     }
+  //   });
 
-    //delete last item from the array
-    if (recent_sent_products.length > 50) {
-      let extra_products = recent_sent_products - 50;
-      recent_sent_products.splice(-extra_products);
-    }
+  //   //delete last item from the array
+  //   if (recent_sent_products.length > 112) {
+  //     let extra_products = recent_sent_products - 112;
+  //     recent_sent_products.splice(-extra_products);
+  //   }
 
-    sellerProfile.recent_sent_products = recent_sent_products;
+  //   sellerProfile.recent_sent_products = recent_sent_products;
 
-    await sellerProfile.save();
-  }
+  //   await sellerProfile.save();
+  // }
 
   //const total =await ProductModel.countDocuments();
 
@@ -346,7 +363,7 @@ const getProductById = catchAsync(async (req, res, next) => {
     let recent_clicked_products = [...profile.recent_clicked_products];
 
     //delete last item from the array
-    if (recent_clicked_products.length > 49) {
+    if (recent_clicked_products.length > 111) {
       recent_clicked_products.pop();
     }
 
@@ -380,7 +397,9 @@ const createProduct = catchAsync(async (req, res, next) => {
 
   let parentCategories = [];
   let keywords = [];
-  let impressionCost = 0;
+  let impressionCost;
+  let impressions = 1;
+  let clicks = 1;
 
   const category = await CategoryModel.findById(req.body.category).populate({
     path: 'parents',
@@ -405,8 +424,9 @@ const createProduct = catchAsync(async (req, res, next) => {
   if (count == 0) {
     impressionCost = 5;
   } else {
-    const product = await ProductModel.aggregate([{ $sample: { size: 1 } }]);
-    console.log(product);
+    const product = await ProductModel.find({})
+      .sort({ impressionCost: 1 })
+      .limit(1);
     impressionCost = product[0].impressionCost;
   }
 
@@ -418,6 +438,8 @@ const createProduct = catchAsync(async (req, res, next) => {
     category: category.id,
     location: shop.location, //new
     impressionCost,
+    impressions,
+    clicks,
   });
 
   res.status(201).json({
