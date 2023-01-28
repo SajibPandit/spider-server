@@ -55,9 +55,12 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   if (sortBy) {
     const parts = sortBy.split(':');
-
-    if(history && parts[0] === 'bestMatch' && skip==0){
+    
+    if (history) {
       willFilteredProducts = history.split(',');
+    }
+    if(parts[0] === 'bestMatch' && skip==0){
+      sort.impressionCost = 1;
     }else {
       sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
     }
