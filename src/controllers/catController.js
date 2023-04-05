@@ -59,6 +59,15 @@ const getAllRootCategories = catchAsync(async (req, res, next) => {
           }
         }
 
+        // Move the category named others to the last
+        if (formattedCat[formattedCat.length - 1].name != 'Others') {
+          const indexOfOthersCategory = formattedCat.findIndex(object => {
+            return object.name == 'Others';
+          });
+
+          formattedCat.push(formattedCat.splice(indexOfOthersCategory, 1)[0]);
+        }
+
         res.json({
           success: true,
           body: { total: formattedCat.length, data: formattedCat },
@@ -116,7 +125,7 @@ const createCategory = catchAsync(async (req, res, next) => {
     name: 'Others',
     slug: 'others',
     creator: req.admin.id,
-    parentId:category._id,
+    parentId: category._id,
     icon: 'https://cdn-icons-png.flaticon.com/512/8215/8215476.png',
   });
 
@@ -221,6 +230,7 @@ const getSingleCategory = catchAsync(async (req, res, next) => {
         if (error) {
           return next(new AppError(err.message, 400));
         }
+
         if (categories) {
           const categoryList = getFormattedSingleCategory(
             req.params.id,
@@ -228,6 +238,23 @@ const getSingleCategory = catchAsync(async (req, res, next) => {
             res,
             category, //passing for solve url problem
           );
+
+          // Move the category named others to the last
+          if (
+            categoryList.childrens[categoryList.childrens.length - 1].name !=
+            'Others'
+          ) {
+            const indexOfOthersCategory = categoryList.childrens.findIndex(
+              object => {
+                return object.name == 'Others';
+              },
+            );
+
+            categoryList.childrens.push(
+              categoryList.childrens.splice(indexOfOthersCategory, 1)[0],
+            );
+          }
+
           return res.status(200).json({
             success: true,
             body: categoryList,

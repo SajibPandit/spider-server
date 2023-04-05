@@ -162,6 +162,9 @@ exports.getSingleCategory = catchAsync(async (req, res, next) => {
       if (error) {
         return next(new AppError(err.message, 400));
       }
+
+      console.log(categories)
+      
       if (categories) {
         const categoryList = getFormattedSingleCategory(
           req.params.id,
