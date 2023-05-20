@@ -35,9 +35,6 @@ const productSchema = new Schema(
       type: Number,
       required: [true, 'Price is required'],
     },
-
-    //new
-
     location: {
       type: {
         type: String,
@@ -68,7 +65,7 @@ const productSchema = new Schema(
     },
     averageRating: {
       type: Number,
-      default : 0,
+      default: 0,
       default: function () {
         if (this.reviews.length === 0) {
           return 0;
@@ -106,6 +103,19 @@ const productSchema = new Schema(
       },
     },
     keywords: [String],
+
+    isInAuction: {
+      type: Boolean,
+      default: false,
+    },
+    highestAuctionPrice: {
+      type: Number,
+      default: 0,
+    },
+    highestAuctionPriceByBuyer: {
+      type: Schema.Types.ObjectId,
+      ref: 'Seller',
+    },
   },
   {
     timestamps: true,
@@ -139,7 +149,7 @@ productSchema.index({ location: '2dsphere' });
 //   next();
 // });
 
-productSchema.virtual("avgRating").get(function(){
+productSchema.virtual('avgRating').get(function () {
   if (this.reviews.length === 0) {
     return 0;
   }
@@ -147,7 +157,7 @@ productSchema.virtual("avgRating").get(function(){
   const sum = ratings.reduce((acc, curr) => acc + curr);
   console.log(sum / ratings.length);
   return sum / ratings.length;
-})
+});
 
 // productSchema.virtual('ICTRatio').get(function () {
 //   let reviews;
@@ -160,7 +170,6 @@ productSchema.virtual("avgRating").get(function(){
 //   }
 //   return Number((this.clicks * reviews) / this.impressions).toFixed(4);
 // });
-
 
 // auto calculate impression cost
 // productSchema.pre(
@@ -177,9 +186,7 @@ productSchema.virtual("avgRating").get(function(){
 //   },
 // );
 
-
 // Creating model from a Schema
 const ProductModel = mongoose.model('Product', productSchema);
-
 
 module.exports = ProductModel;

@@ -1,5 +1,4 @@
 ('use strict');
-
 // Importing the app error class
 const AppError = require('../utils/appError');
 const adminRouter = require('./auth-routes/adminRoutes');
@@ -12,9 +11,12 @@ const reviewRouter = require('./reviewRoutes');
 const uploadRouter = require('./uploadRoutes');
 const contactRouter = require('./contactRoutes');
 const termsAndConditionsRouter = require('./termsAndConditionsRoutes');
-
+const auctionRouter = require('./auctionRoutes');
+const shippingAddressRouter = require('./shippingAddressRoutes');
+const orderRouter = require('./orderRoutes');
 const conversationRouter = require('./chat-routes/conversationRoutes');
 const messageRouter = require('./chat-routes/messageRoutes');
+
 
 // Importing express router
 const router = require('express').Router();
@@ -30,9 +32,12 @@ router.use('/reviews', reviewRouter);
 router.use('/feedbacks', feedbackRouter);
 router.use('/terms', termsAndConditionsRouter);
 router.use('/contact', contactRouter);
+router.use('/auction', auctionRouter);
+router.use('/shipping-address',shippingAddressRouter)
+router.use('/order',orderRouter)
 
-router.use('/conversations',conversationRouter)
-router.use('/message',messageRouter)
+router.use('/conversations', conversationRouter);
+router.use('/message', messageRouter);
 
 // The 404 route
 router.all('*', (req, res, next) =>
