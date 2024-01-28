@@ -1,5 +1,5 @@
 //Imports
-const { getDatabase, ref, onValue, set } = require('firebase/database');
+const { getDatabase, ref, onValue, update } = require('firebase/database');
 
 //Importing firebase config
 const { app } = require('./config');
@@ -19,7 +19,6 @@ onValue(starCountRef, snapshot => {
   if (data.Status == '1') {
     OTPData.filter(item => item.phone == data.Receiver_Number);
   }
-  // console.log(data.Receiver_Number);
 });
 
 //Will handle when one wants to register
@@ -35,10 +34,10 @@ const handleOTP = (phone, otp) => {
 //Sending OTP
 const sendOTP = singleOTP => {
   const { phone, otp } = singleOTP;
-  console.log(singleOTP.count);
   singleOTP.count++;
   const db = getDatabase();
-  set(ref(db, '/ESP32+GSM+Email/GSM/Send_OTP'), {
+
+  update(ref(db, '/ESP32+GSM+Email/GSM/Send_OTP'), {
     Receiver_Number: phone,
     SMS_Content: `Your Spider OTP is ${otp}`,
     Status: '0',
@@ -51,7 +50,6 @@ const checkOTPDataArray = () => {
     for (const singleOTP of OTPData) {
       if (singleOTP.count == 0) {
         sendOTP(singleOTP);
-        // console.log(singleOTP);
       }
     }
   }

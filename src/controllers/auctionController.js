@@ -35,15 +35,29 @@ const createProductAuctionData = catchAsync(async (req, res, next) => {
   const { offeredPrice } = req.body;
   const { productId } = req.params;
 
-  const product = await ProductModel.findById(productId);
+  const isExistAuctionData = await AuctionModel.findOne({
+    seller: req.seller.id,
+    product: productId,
+  });
 
-  //product must need to be in auction
-  if (product.isInAuction) {
-    const auctionData = await AuctionModel.create({
-      seller: req.seller.id,
-      product: productId,
-      offeredPrice,
-    });
+  if (isExistAuctionData) {
+    isExistAuctionData.offeredPrice;
+    await isExistAuctionData.save();
+  } else {
+    const product = await ProductModel.findById(productId);
+    // product must need to be in auction
+    if (product.isInAuction) {
+      const auctionData = await AuctionModel.create({
+        seller: req.seller.id,
+        product: productId,
+        offeredPrice,
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: "This product isn't in auction",
+      });
+    }
 
     //if this offered price is highest update the product data
     if (product.highestAuctionPrice < offeredPrice) {
@@ -52,17 +66,12 @@ const createProductAuctionData = catchAsync(async (req, res, next) => {
 
       await product.save();
     }
-
-    res.status(201).json({
-      success: true,
-      body: { auctionData },
-    });
-  } else {
-    res.status(400).json({
-      success: false,
-      message: "This product isn't in auction",
-    });
   }
+
+  res.status(201).json({
+    success: true,
+    body: { data: auctionData ? auctionData : isExistAuctionData },
+  });
 });
 
 //@route   : PUT /api/v1/auction/:auctionId
@@ -133,7 +142,7 @@ const deleteAuctionData = catchAsync(async (req, res, next) => {
 });
 
 //@route   : PUT /api/v1/handle/:productId
-//@access  : seller only
+//@access  : shop only
 //@details : enable or disable auction data of a product
 const handleProductAuction = catchAsync(async (req, res, next) => {
   const { productId } = req.params;

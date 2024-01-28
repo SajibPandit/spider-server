@@ -12,6 +12,8 @@ const { adminRole } = require('../../models/auth-models/roles');
 const ProductModel = require('../../models/ProductModel');
 const SellerProfileModel = require('../../models/auth-models/profile-models/SellerProfileModel');
 const SellerModel = require('../../models/auth-models/SellerModel');
+const UpgradeSellerTypeModel = require('../../models/UpgradeSellerTypeModel');
+const NotificationModel = require('../../models/NotificationModel');
 
 const getAdmins = catchAsync(async (req, res, next) => {
   const admins = await AdminModel.find().populate('adminProfile');
@@ -127,6 +129,108 @@ const getAdminStat = catchAsync(async (req, res, next) => {
   });
 });
 
+//@route   : GET /api/v1/admin/upgrade-seller-type
+//@access  : admin only
+//@details : get all upgrade seller type request data
+const getUpgradeSellerTypeRequestsData = catchAsync(async (req, res, next) => {
+  const { limit = 10, skip = 0 } = req.query;
+  const data = await UpgradeSellerTypeModel.find()
+    .limit(parseInt(limit))
+    .skip(parseInt(skip));
+
+  res.status(200).json({
+    success: true,
+    body: { data },
+  });
+});
+
+//@route   : GET /api/v1/admin/upgrade-seller-type/:sellerId
+//@access  : admin only
+//@details : get single data of seller type upgradation request
+const getSingleUpgradeSellerTypeRequestData = catchAsync(
+  async (req, res, next) => {
+    const { sellerId } = req.params;
+    const data = await UpgradeSellerTypeModel.findOne({ seller: sellerId });
+
+    if (!data) return next(new AppError('Request not found!', 400));
+
+    res.status(200).json({
+      success: true,
+      body: { data },
+    });
+  },
+);
+
+//@route   : POST /api/v1/admin/upgrade-seller-type
+//@access  : admin only
+//@details : upgrade seller role
+const upgradeSellerType = catchAsync(async (req, res, next) => {
+  const { seller, type } = req.body;
+  const data = await SellerModel.findByIdAndUpdate(
+    seller,
+    { type },
+    { new: true, runValidators: true },
+  );
+
+  if (!data) return next(new AppError('Request failed!', 400));
+
+  // send notification to seller
+  const notification = new NotificationModel({
+    text: `Congratulations. Your accout has been upgraded to ${type}`,
+    userId: seller,
+  });
+  await notification.save();
+
+  await UpgradeSellerTypeModel.findOneAndDelete({ seller });
+
+
+
+  res.status(200).json({
+    success: true,
+    body: { data },
+  });
+});
+
+//@route   : POST /api/v1/admin/block-upgrade-request
+//@access  : admin only
+//@details : block upgrade seller type request
+const blockUpgradeSellerTypeRequest = catchAsync(async (req, res, next) => {
+  const { seller } = req.body;
+  const data = await UpgradeSellerTypeModel.findOneAndUpdate(
+    { seller },
+    { isBlocked: true },
+    { new: true, runValidators: true },
+  );
+
+  if (!data) return next(new AppError('Request failed!', 400));
+
+  // send notification to seller
+  const notification = new NotificationModel({
+    text: 'Admin has blocked your upgrade request.',
+    userId: seller,
+  });
+  await notification.save();
+
+  res.status(200).json({
+    success: true,
+    body: { data },
+  });
+});
+
+//@route   : GET /api/v1/admin/notifications
+//@access  : admin only
+//@details : get all notifications of a admin
+const getAdminNotifications = catchAsync(async (req, res, next) => {
+  const data = await NotificationModel.find({userId : req.admin.id}).sort("-createdAt")
+
+  if (!data) return next(new AppError('Request failed!', 400));
+
+  res.status(200).json({
+    success: true,
+    body: { data },
+  });
+});
+
 module.exports = {
   signUp,
   getAdmins,
@@ -137,4 +241,9 @@ module.exports = {
   updateAdminProfile,
   getAdminStat,
   createAdmin,
+  getUpgradeSellerTypeRequestsData,
+  getSingleUpgradeSellerTypeRequestData,
+  upgradeSellerType,
+  blockUpgradeSellerTypeRequest,
+  getAdminNotifications,
 };

@@ -21,7 +21,11 @@ const {
   forgotPassword,
   resetPassword,
   updatePassword,
-  verifyOtp
+  verifyOtp,
+  upgradeSellerTypeRequest,
+  getSellerNotifications,
+  getShopNotifications,
+  googleLogin
 } = require('../../controllers/auth-controllers/sellerController');
 const {
   adminRestrict,
@@ -31,6 +35,7 @@ const {
   createBuyerProfile,
   updateBuyerProfile,
 } = require('../../controllers/auth-controllers/buyerController');
+const { shopRestrict } = require('../../middlewares/auth-guards/shopRestrict');
 
 // Importing the express router
 const sellerRouter = require('express').Router();
@@ -57,11 +62,14 @@ sellerRouter
   .post(sellerRestrict, createBuyerProfile)
   .patch(sellerRestrict, updateBuyerProfile);
 
-sellerRouter.route('/login').post(login);
+sellerRouter.route('/login').post(googleLogin);
+sellerRouter.route('/google-login').post(login);
 
 sellerRouter.route('/logout').post(logout);
 
 sellerRouter.route('/stat').get(sellerRestrict, sellerStat);
+
+sellerRouter.route('/upgrade').post(sellerRestrict, upgradeSellerTypeRequest);
 
 sellerRouter.route('/block/:sellerId').put(adminRestrict, blockSeller);
 sellerRouter.route('/unblock/:sellerId').put(adminRestrict, unblockSeller);
@@ -70,6 +78,13 @@ sellerRouter.route('/forgot-password').put(forgotPassword);
 sellerRouter.route('/reset-password').put(resetPassword);
 sellerRouter.route('/verify-otp').put(verifyOtp);
 sellerRouter.route('/update-password').put(sellerRestrict, updatePassword);
+
+sellerRouter
+  .route('/notifications')
+  .get(sellerRestrict, getSellerNotifications);
+sellerRouter
+  .route('/shop-notifications')
+  .get(shopRestrict, getShopNotifications);
 
 sellerRouter.route('/:id').get(getSingleSeller);
 

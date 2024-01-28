@@ -10,12 +10,19 @@ const orderSchema = new Schema(
     seller: {
       type: Schema.Types.ObjectId,
       ref: 'Seller',
+      required: true,
+    },
+    shop: {
+      type: Schema.Types.ObjectId,
+      ref: 'SellerProfile',
+      required: true,
     },
     items: [
       {
         product: {
           type: Schema.Types.ObjectId,
           ref: 'Product',
+          required: true,
         },
         quantity: {
           type: Number,
@@ -37,6 +44,7 @@ const orderSchema = new Schema(
     shippingAddress: {
       type: Schema.Types.ObjectId,
       ref: 'ShippingAddress',
+      required: true,
     },
     status: {
       type: String,
@@ -63,9 +71,6 @@ const orderSchema = new Schema(
 );
 
 // Creating model from a Schema
-const OrderModel = mongoose.model(
-  'Order',
-  orderSchema,
-);
+const OrderModel = mongoose.model('Order', orderSchema);
 
 module.exports = OrderModel;

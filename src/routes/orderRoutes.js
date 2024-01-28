@@ -1,15 +1,18 @@
-const { adminRestrict } = require('../middlewares/auth-guards/adminRestrict');
 const { sellerRestrict } = require('../middlewares/auth-guards/sellerRestrict');
+const { shopRestrict } = require('../middlewares/auth-guards/shopRestrict');
 
 const {
   getSingleOrder,
   getSellerOrders,
+  getShopOrders,
   updateOrder,
   createOrder,
   deleteOrder,
 } = require('../controllers/orderController');
 
 const orderRouter = require('express').Router();
+
+orderRouter.route('/shop').get(shopRestrict, getShopOrders);
 
 orderRouter
   .route('/')
@@ -19,7 +22,7 @@ orderRouter
 orderRouter
   .route('/:orderId')
   .get(getSingleOrder)
-  .put(adminRestrict, updateOrder)
+  .put(shopRestrict, updateOrder)
   .delete(sellerRestrict, deleteOrder);
 
 module.exports = orderRouter;

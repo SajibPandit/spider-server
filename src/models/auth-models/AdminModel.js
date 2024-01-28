@@ -4,6 +4,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator').default;
 const bcrypt = require('bcryptjs');
+const notificationSchema = require('../NotificationSchema');
 const Schema = mongoose.Schema;
 
 // Creating a schema
@@ -41,6 +42,11 @@ const adminSchema = new Schema(
       type: String,
       required: [true, 'Password is required'],
       select: false,
+    },
+    notifications: {
+      type: [notificationSchema],
+      maxlength: 10,
+      default: [],
     },
 
     registered_at: {
@@ -90,6 +96,15 @@ adminSchema.pre(['save'], async function (next) {
   // Hash the password with the cost of 12
   this.password = await bcrypt.hash(this.password, 12);
   this.password_changed_at = Date.now();
+  next();
+});
+
+// automatically delete oldest notifications
+adminSchema.pre('save', function (next) {
+  if (this.notifications.length > 10) {
+    // Delete old data by keeping only the last 100 elements
+    this.notifications = this.notifications.slice(-10);
+  }
   next();
 });
 

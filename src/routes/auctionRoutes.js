@@ -9,12 +9,13 @@ const {
   handleProductAuction,
   getSellerAuctionDataOfAProduct
 } = require('../controllers/auctionController');
+const { shopRestrict } = require('../middlewares/auth-guards/shopRestrict');
 
 const auctionRouter = require('express').Router();
 
 auctionRouter
   .route('/handle/:productId')
-  .put(adminRestrict, handleProductAuction);
+  .put(shopRestrict, handleProductAuction);
 
 auctionRouter.route('/:sellerId/:productId').get(getSellerAuctionDataOfAProduct)
 

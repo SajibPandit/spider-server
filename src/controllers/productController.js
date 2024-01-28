@@ -1,5 +1,5 @@
 'use strict';
-
+// Importing the model
 const SellerProfileModel = require('../models/auth-models/profile-models/SellerProfileModel');
 const SellerModel = require('../models/auth-models/SellerModel');
 const ProductModel = require('../models/ProductModel');
@@ -7,7 +7,8 @@ const ReportModel = require('../models/reportModel');
 const ReviewModel = require('../models/reviewModel');
 const SavedProductModel = require('../models/SavedProductsModel');
 const CategoryModel = require('../models/CategoryModel');
-// Importing the model
+const SearchKeywordModel = require('../models/SearchKeywordModel');
+
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
@@ -45,7 +46,7 @@ const getProducts = catchAsync(async (req, res, next) => {
     longitude,
     latitude,
     searchKey,
-    // userId,
+    userId,
     history,
   } = req.query;
 
@@ -55,13 +56,13 @@ const getProducts = catchAsync(async (req, res, next) => {
 
   if (sortBy) {
     const parts = sortBy.split(':');
-    
+
     if (history) {
       willFilteredProducts = history.split(',');
     }
-    if(parts[0] === 'bestMatch' && skip==0){
+    if (parts[0] === 'bestMatch' && skip == 0) {
       sort.impressionCost = 1;
-    }else {
+    } else {
       sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
     }
 
@@ -138,6 +139,36 @@ const getProducts = catchAsync(async (req, res, next) => {
   }
 
   if (searchKey) {
+    //Remove all the unnecessary spaces
+    searchKey = searchKey.trim();
+    // Going to save the searchKey as keyword in the database and also the coordinates
+    // Firstly check keyword aleady exists or not
+    const keywordExists = await SearchKeywordModel.findOne({
+      keyword: searchKey.toLowerCase(),
+    });
+
+    // If not then save the keyword to the database
+    if (!keywordExists) {
+      let keywordData = {};
+      keywordData.keyword = searchKey.toLowerCase();
+      if (userId) {
+        keywordData.seller = userId;
+      }
+      if (longitude && latitude) {
+        keywordData = {
+          ...keywordData,
+          location: {
+            coordinates: [longitude, latitude],
+          },
+        };
+      }
+      await SearchKeywordModel.create({ ...keywordData });
+    } else {
+      // If exists make increment of the count number
+      keywordExists.count = keywordExists.count + 1;
+      await keywordExists.save();
+    }
+
     searchKey = searchKey.trim();
     query = {
       ...query,

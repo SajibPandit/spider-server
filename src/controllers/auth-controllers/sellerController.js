@@ -13,10 +13,14 @@ const ProductModel = require('../../models/ProductModel');
 const ReportModel = require('../../models/reportModel');
 const ReviewModel = require('../../models/reviewModel');
 const validator = require('validator');
+const axios = require('axios');
 
 const { generateOTP } = require('../../helpers/otpGenerator');
 const { handleOTP } = require('../../firebase/services');
 const OTPModel = require('../../models/auth-models/OTPModel');
+const UpgradeSellerTypeModel = require('../../models/UpgradeSellerTypeModel');
+const NotificationModel = require('../../models/NotificationModel');
+const { response } = require('express');
 
 // Function to get all sellers
 const getSellers = catchAsync(async (req, res, next) => {
@@ -119,6 +123,33 @@ const login = catchAsync(async (req, res, next) => {
   if (!correct) return next(new AppError('Invalid phone or password', 401));
 
   sendToken(sellerRole, seller, 200, res);
+});
+
+//handle google login
+const googleLogin = catchAsync(async (req, res, next) => {
+  if (req.body.googleAccessToken) {
+    axios
+      .get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+          Authorization: `Bearer ${req.body.googleAccessToken}`,
+        },
+      })
+      .then(async response => {
+        const name = `${response.data.given_name} ${response.data.family_name}`;
+        const email = response.data.email;
+
+        // check existance of entered email
+        const isExistEmail = await SellerModel.findOne({ email });
+        if (isExistEmail) {
+          sendToken(sellerRole, isExistEmail, 200, res);
+        }
+        const seller = await SellerModel.create({
+          name,
+          email,
+        });
+        sendToken(sellerRole, seller, 200, res);
+      });
+  }
 });
 
 const logout = catchAsync(async (req, res, next) => {
@@ -424,6 +455,66 @@ const updatePassword = catchAsync(async (req, res, next) => {
   });
 });
 
+const upgradeSellerTypeRequest = catchAsync(async (req, res, next) => {
+  const { requestedType, message } = req.body;
+  const requestData = await UpgradeSellerTypeModel.findOne({
+    seller: req.seller.id,
+  });
+
+  if (requestData) {
+    if (requestData.isBlocked) {
+      return next(new AppError('Upgrade request blocked!', 404));
+    }
+    requestData.seller = req.seller.id;
+    requestData.requestedType = requestedType;
+    requestData.message = message;
+    await requestData.save();
+  } else {
+    const data = await UpgradeSellerTypeModel.create({
+      ...req.body,
+      seller: req.seller.id,
+    });
+    if (!data) return next(new AppError('Request failed!', 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Upgrade request sent to admin',
+  });
+});
+
+//@route   : GET /api/v1/sellers/notifications
+//@access  : seller only
+//@details : get all notifications of a seller
+const getSellerNotifications = catchAsync(async (req, res, next) => {
+  const data = await NotificationModel.find({ userId: req.seller.id }).sort(
+    '-createdAt',
+  );
+
+  if (!data) return next(new AppError('Request failed!', 400));
+
+  res.status(200).json({
+    success: true,
+    body: { data },
+  });
+});
+
+//@route   : GET /api/v1/sellers/shop-notifications
+//@access  : shop only
+//@details : get all notifications of a shop
+const getShopNotifications = catchAsync(async (req, res, next) => {
+  const data = await NotificationModel.find({ userId: req.shop.id }).sort(
+    '-createdAt',
+  );
+
+  if (!data) return next(new AppError('Request failed!', 400));
+
+  res.status(200).json({
+    success: true,
+    body: { data },
+  });
+});
+
 module.exports = {
   signUp,
   getSellers,
@@ -442,4 +533,8 @@ module.exports = {
   resetPassword,
   updatePassword,
   verifyOtp,
+  upgradeSellerTypeRequest,
+  getSellerNotifications,
+  getShopNotifications,
+  googleLogin,
 };

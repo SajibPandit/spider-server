@@ -5,18 +5,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const Schema = mongoose.Schema;
 const SellerModel = require('../SellerModel');
-
-const pointSchema = new Schema({
-  type: {
-    type: String,
-    enum: ['Point'],
-    // required: true
-  },
-  coordinates: {
-    type: [Number],
-    required: true,
-  },
-});
+const notificationSchema = require('../../NotificationSchema');
 
 // Creating a schema
 const sellerProfileSchema = new Schema({
@@ -75,20 +64,11 @@ const sellerProfileSchema = new Schema({
     trim: true,
   },
 
-  //16 OCT 2022
-  // recent_sent_products: [Schema.Types.ObjectId],
-
-  // recent_clicked_products: [Schema.Types.ObjectId],
-  // location: {
-  //   type: {
-  //     type: String,
-  //     enum: ['Point'],
-  //   },
-  //   coordinates: {
-  //     type: [Number],
-  //     // required: true,
-  //   },
-  // },
+  notifications: {
+    type: [notificationSchema],
+    maxlength: 100,
+    default: [],
+  },
 
   blocked: { type: Boolean, default: false },
 });
@@ -99,6 +79,15 @@ sellerProfileSchema.virtual('products', {
   ref: 'Product',
   localField: '_id',
   foreignField: 'shop',
+});
+
+// automatically delete oldest notifications
+sellerProfileSchema.pre('save', function (next) {
+  if (this.notifications.length > 100) {
+    // Delete old data by keeping only the last 100 elements
+    this.notifications = this.notifications.slice(-100);
+  }
+  next();
 });
 
 // Creating model from a Schema

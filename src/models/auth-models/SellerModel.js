@@ -4,6 +4,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator').default;
 const bcrypt = require('bcryptjs');
+const notificationSchema = require('../NotificationSchema');
 const Schema = mongoose.Schema;
 
 // Creating a schema
@@ -56,7 +57,16 @@ const sellerSchema = new Schema(
       default: Date.now,
       immutable: true,
     },
-
+    type: {
+      type: String,
+      enum: ['ordinary', 'official', 'verified'],
+      default: 'ordinary',
+    },
+    notifications: {
+      type: [notificationSchema],
+      maxlength: 10,
+      default: [],
+    },
     is_email_verified: {
       type: Boolean,
       default: false,
@@ -99,6 +109,15 @@ sellerSchema.pre(['save'], async function (next) {
   // Hash the password with the cost of 12
   this.password = await bcrypt.hash(this.password, 12);
   this.password_changed_at = Date.now();
+  next();
+});
+
+// automatically delete oldest notifications
+sellerSchema.pre('save', function (next) {
+  if (this.notifications.length > 10) {
+    // Delete old data by keeping only the last 100 elements
+    this.notifications = this.notifications.slice(-10);
+  }
   next();
 });
 

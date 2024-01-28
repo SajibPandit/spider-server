@@ -14,8 +14,10 @@ const termsAndConditionsRouter = require('./termsAndConditionsRoutes');
 const auctionRouter = require('./auctionRoutes');
 const shippingAddressRouter = require('./shippingAddressRoutes');
 const orderRouter = require('./orderRoutes');
+const cartRouter = require('./cartRoutes')
 const conversationRouter = require('./chat-routes/conversationRoutes');
 const messageRouter = require('./chat-routes/messageRoutes');
+const keywordRouter = require('./keywordRoutes');
 
 
 // Importing express router
@@ -34,7 +36,9 @@ router.use('/terms', termsAndConditionsRouter);
 router.use('/contact', contactRouter);
 router.use('/auction', auctionRouter);
 router.use('/shipping-address',shippingAddressRouter)
-router.use('/order',orderRouter)
+router.use('/orders',orderRouter)
+router.use('/carts',cartRouter)
+router.use('/keywords',keywordRouter)
 
 router.use('/conversations', conversationRouter);
 router.use('/message', messageRouter);
