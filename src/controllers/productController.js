@@ -11,6 +11,7 @@ const SearchKeywordModel = require('../models/SearchKeywordModel');
 
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
+const generateSlug = require('../utils/slugUtils');
 
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   var R = 6371; // Radius of the earth in km
@@ -321,6 +322,42 @@ const getNearestProducts = catchAsync(async (req, res, next) => {
     body: { products },
   });
 });
+
+const generateUniqueSlugFromProductsData = catchAsync(
+  async (req, res, next) => {
+    const products = await ProductModel.find();
+    for (let product of products) {
+      let slug = generateSlug(product.title);
+      let existingProduct = await ProductModel.findOne({
+        slug,
+        _id: { $ne: product._id },
+      });
+
+      // If slug exists, append a unique identifier
+      if (existingProduct) {
+        let counter = 1;
+        let newSlug = `${slug}-${counter}`;
+        while (
+          await ProductModel.findOne({
+            slug: newSlug,
+            _id: { $ne: product._id },
+          })
+        ) {
+          counter++;
+          newSlug = `${slug}-${counter}`;
+        }
+        slug = newSlug;
+      }
+
+      product.slug = slug;
+      await product.save();
+      console.log(
+        `Updated product: ${product.title} with slug: ${product.slug}`,
+      );
+    }
+    console.log('All products updated with slugs.');
+  },
+);
 
 // Function to get all products
 const getSellerProducts = catchAsync(async (req, res, next) => {
@@ -698,4 +735,5 @@ module.exports = {
   getWishlistProducts,
   getNearestProducts,
   getSellerProductsById,
+  generateUniqueSlugFromProductsData,
 };

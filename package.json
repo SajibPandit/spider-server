@@ -36,6 +36,7 @@
     "socket.io": "^4.5.1",
     "swagger-jsdoc": "^5.0.1",
     "swagger-ui-express": "^4.1.6",
+    "transliteration": "^2.3.5",
     "validator": "^13.1.17",
     "xss-clean": "^0.1.1"
   },

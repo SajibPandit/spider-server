@@ -4,6 +4,7 @@
 const mongoose = require('mongoose');
 const SellerProfileModel = require('./auth-models/profile-models/SellerProfileModel');
 const SellerModel = require('../models/auth-models/SellerModel');
+const generateSlug = require('../utils/slugUtils');
 const Schema = mongoose.Schema;
 
 // Creating a schema
@@ -30,7 +31,12 @@ const productSchema = new Schema(
       trim: true,
       required: [true, 'Title is required'],
     },
-
+    //adding slug to product model
+    slug: {
+      type: String,
+      trim: true,
+      unique: true,
+    },
     price: {
       type: Number,
       required: [true, 'Price is required'],
@@ -185,6 +191,33 @@ productSchema.virtual('avgRating').get(function () {
 //     next();
 //   },
 // );
+
+// Middleware to generate slug before saving
+productSchema.pre('save', async function (next) {
+  if (this.isModified('title')) {
+    let slug = generateSlug(this.title);
+    let existingProduct = await ProductModel.findOne({
+      slug,
+      _id: { $ne: this._id },
+    });
+
+    // If slug exists, append a unique identifier
+    if (existingProduct) {
+      let counter = 1;
+      let newSlug = `${slug}-${counter}`;
+      while (
+        await ProductModel.findOne({ slug: newSlug, _id: { $ne: this._id } }) //check existing not including this product
+      ) {
+        counter++;
+        newSlug = `${slug}-${counter}`;
+      }
+      slug = newSlug;
+    }
+
+    this.slug = slug;
+  }
+  next();
+});
 
 // Creating model from a Schema
 const ProductModel = mongoose.model('Product', productSchema);
