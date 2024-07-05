@@ -1,6 +1,3 @@
-// Import the transliteration library
-// const transliterate = require('transliteration').slugify;
-
 // Function to generate slug from Bengali and English title
 function generateSlug(title) {
   // Replace non-alphanumeric characters except Bengali characters with hyphen

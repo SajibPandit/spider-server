@@ -16,6 +16,7 @@ const {
   getFavoriteProducts,
   getSellerProductsById,
   generateUniqueSlugFromProductsData,
+  getProductBySlug,
 } = require('../controllers/productController');
 const { sellerRestrict } = require('../middlewares/auth-guards/sellerRestrict');
 const { adminRestrict } = require('../middlewares/auth-guards/adminRestrict');
@@ -43,6 +44,7 @@ productRouter
 productRouter.route('/wishlist').get(sellerRestrict, getWishlistProducts);
 productRouter.route('/favorite').get(sellerRestrict, getFavoriteProducts);
 productRouter.route('/generate-slug').get(generateUniqueSlugFromProductsData);
+productRouter.route('/slug/:slug').get(getProductBySlug);
 
 productRouter
   .route('/:productId')

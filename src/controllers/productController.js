@@ -405,6 +405,8 @@ const getProductById = catchAsync(async (req, res, next) => {
     .populate({ path: 'shop', populate: 'seller' })
     .populate('reviews');
 
+  console.log(product);
+
   if (!product) return next(new AppError('Not Found', 404));
 
   //Changed by Sajib
@@ -442,6 +444,69 @@ const getProductById = catchAsync(async (req, res, next) => {
     if (!recent_clicked_products.includes(product_id)) {
       //add new item to the first of the array
       recent_clicked_products.unshift(product._id);
+    }
+
+    profile.recent_clicked_products = recent_clicked_products;
+    await profile.save();
+
+    // await SellerModel.findOneAndUpdate(
+    //   { _id: profile._id },
+    //   recent_clicked_products,
+    //   { runValidators: true },
+    // );
+  }
+
+  res.status(200).json({
+    success: true,
+    body: { product },
+  });
+});
+
+const getProductBySlug = catchAsync(async (req, res, next) => {
+  const { slug } = req.params;
+  const { userId } = req.query;
+
+  let product = await ProductModel.findOne({ slug })
+    .populate('category')
+    .populate({ path: 'shop', populate: 'seller' })
+    .populate('reviews');
+
+  if (!product) return next(new AppError('Not Found', 404));
+
+  //increment product click count
+  await ProductModel.updateMany({ slug }, { $inc: { clicks: 1 } });
+
+  const reviews = await ReviewModel.find({ product: product.id });
+
+  let rating;
+  if (reviews.length === 0) {
+    rating = 2.5;
+  } else {
+    rating = product.averageRating;
+  }
+
+  let popularity = Number(
+    ((product.clicks + 1) * rating) / product.impressions,
+  ).toFixed(4);
+
+  await ProductModel.findOneAndUpdate({ _id: product.id }, { popularity });
+
+  //code for trcking recent_clicked_products
+  //check if the seller is logged in or not
+  if (userId) {
+    const profile = await SellerModel.findById(userId);
+
+    let recent_clicked_products = [...profile.recent_clicked_products];
+
+    //delete last item from the array
+    if (recent_clicked_products.length > 111) {
+      recent_clicked_products.pop();
+    }
+
+    //check if the item is already exists or not
+    if (!recent_clicked_products.includes(product.id)) {
+      //add new item to the first of the array
+      recent_clicked_products.unshift(product.id);
     }
 
     profile.recent_clicked_products = recent_clicked_products;
@@ -724,6 +789,7 @@ module.exports = {
   getProducts,
   getSellerProducts,
   getProductById,
+  getProductBySlug,
   createProduct,
   updateProduct,
   deleteProduct,
